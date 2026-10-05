@@ -4,7 +4,7 @@ display_name: "高情商聊天"
 display_name_en: "High-EQ Chat Master"
 description: "高情商聊天与沟通技能。融合全网高情商话术、高情商沟通经典书籍（非暴力沟通、关键对话、蔡康永说话之道、人性的弱点、好好说话等）与高情商聊天大师（何炅、黄渤、蔡康永、汪涵等）方法论，覆盖两性情感、亲密情感、职场沟通、职场谈判、生活社交等多领域。当用户需要写高情商话术、聊天回复、化解尴尬、安慰、拒绝、夸人、说服、谈判、职场沟通、亲密关系沟通、恋爱聊天，或遇到「不知道怎么接话」「怕说错话得罪人」等场景时使用。核心机制是生成话术前必须经过 3~5 遍自我检查（说话语气、说话环境、说话方式、逻辑错误、情感边界等），确保话术得体、有分寸、不踩雷。"
 description_en: "A high-EQ chat and communication skill. It fuses popular high-EQ conversation techniques, classic communication books (Nonviolent Communication, Crucial Conversations, Kevin Tsai's The Art of Speaking, How to Win Friends and Influence People, etc.) and the methods of high-EQ masters (He Jiong, Huang Bo, Kevin Tsai, Wang Han), covering romance, intimate relationships, workplace communication, negotiation, and daily social scenarios. Use it when the user needs high-EQ replies, chat responses, defusing awkwardness, comforting, polite refusal, compliments, persuasion, negotiation, or relationship communication. Core mechanism - every script must pass 3-5 rounds of self-review (tone, context, manner, logic, emotional boundaries) before delivery."
-version: "1.8.0"
+version: "1.9.0"
 agent_created: true
 ---
 
@@ -101,6 +101,7 @@ agent_created: true
 | 客户甲方 / 跨部门冲突 / 公开即兴发言 / 道歉 / 离职谈薪 / 微信文字规范 / 长对话谈判 | `references/06-扩展场景话术库.md` |
 | 经典书籍方法论深化（FBI 战术同理心 / 高难度谈话三层 / 戈特曼修复句库 / 爱的五种语言 / 影响力 / 哈佛谈判）——对方情绪对抗、僵持、翻车复盘时优先查 | `references/08-经典书籍方法论库.md` |
 | 扩展书单深化（脱不花《沟通的方法》全流程 / 谈话的力量微技巧 / 被讨厌的勇气课题分离 / 亲密关系科学 / 社会心理学机制）——日常接话、边界纠缠、心理内耗时优先查 | `references/10-扩展书单方法论库.md` |
+| 线上社交（评论区/私信/群聊/朋友圈）话术、×/√ 对照改口、口语微技巧（词语替换/示弱克刚/自黑救场）、平台验证的新书方法（干得漂亮/特别会说话×√法/5%改变/幽默段子公式）——**线上文字场景一律先查本库** | `references/11-平台榜单与实战话术库.md` |
 | 高频场景对照（直觉版 vs 高情商版 50 条快查，按场景域检索）——拿不准怎么开口时先找同类场景 | `references/09-高频场景回复案例集.md` |
 | 用户的人际关系档案（**接到请求先读**，能对上号就不再追问关系与场景） | `references/07-用户关系档案.md` |
 | 自我检查清单（每遍该查什么） | `references/05-自我检查清单.md` |
@@ -186,3 +187,4 @@ agent_created: true
 - `08-经典书籍方法论库.md` —— 10 部经典深化（掌控谈话战术同理心六步/标注句库/校准问题表、高难度谈话三层对话、戈特曼四骑士+修复尝试句库、爱的五种语言、影响力六武器、哈佛谈判、关键冲突分层、NVC 倾听篇）+ 症状检索速查表。
 - `09-高频场景回复案例集.md` —— 5 大场景域 50 条「直觉版 vs 高情商版」对照（职场对领导/对同事、亲密关系、家庭亲戚、朋友社交、社交微句 + 第二批职场进阶/生活社交/亲密家庭），每条标注底层公式，附直觉版翻车共性规律复盘。
 - `10-扩展书单方法论库.md` —— 第二批书单深化（脱不花《沟通的方法》：倾听三角形/四型人/三大原则/18 场景公式；《谈话的力量》：自由信息法/破唱片法/赞美公式/I 陈述；《被讨厌的勇气》课题分离；《亲密关系》要求-回避模式；《社会心理学》归因机制；《演讲的力量》《社交天性》《也许你该找个人聊聊》）+ 症状检索速查表。
+- `11-平台榜单与实战话术库.md` —— 第三轮八平台调研（微信读书/得到/京东/网易/博看/小红书/B站/知乎）：《特别会说话的人都这样说话》×/√ 对照法 10 组、《干得漂亮》办事心法 4 条、线上社交场景话术（评论区三模板/黄金 30 分钟铁三角/负面评论转化三步/私信破冰三段式/避雷清单）、口语微技巧弹药库（知乎 25 条词语替换表 + B站口诀：示弱克刚/藏拙/自黑救场/沉默表达）+ 症状检索速查表；八平台头部作品真实数据（推荐值/评论量/粉丝量）。
