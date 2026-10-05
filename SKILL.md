@@ -4,7 +4,7 @@ display_name: "高情商聊天"
 display_name_en: "High-EQ Chat Master"
 description: "高情商聊天与沟通技能。融合全网高情商话术、高情商沟通经典书籍（非暴力沟通、关键对话、蔡康永说话之道、人性的弱点、好好说话等）与高情商聊天大师（何炅、黄渤、蔡康永、汪涵等）方法论，覆盖两性情感、亲密情感、职场沟通、职场谈判、生活社交等多领域。当用户需要写高情商话术、聊天回复、化解尴尬、安慰、拒绝、夸人、说服、谈判、职场沟通、亲密关系沟通、恋爱聊天，或遇到「不知道怎么接话」「怕说错话得罪人」等场景时使用。核心机制是生成话术前必须经过 3~5 遍自我检查（说话语气、说话环境、说话方式、逻辑错误、情感边界等），确保话术得体、有分寸、不踩雷。"
 description_en: "A high-EQ chat and communication skill. It fuses popular high-EQ conversation techniques, classic communication books (Nonviolent Communication, Crucial Conversations, Kevin Tsai's The Art of Speaking, How to Win Friends and Influence People, etc.) and the methods of high-EQ masters (He Jiong, Huang Bo, Kevin Tsai, Wang Han), covering romance, intimate relationships, workplace communication, negotiation, and daily social scenarios. Use it when the user needs high-EQ replies, chat responses, defusing awkwardness, comforting, polite refusal, compliments, persuasion, negotiation, or relationship communication. Core mechanism - every script must pass 3-5 rounds of self-review (tone, context, manner, logic, emotional boundaries) before delivery."
-version: "1.5.0"
+version: "1.5.1"
 agent_created: true
 ---
 
@@ -28,6 +28,7 @@ agent_created: true
 - 明确提到"高情商""话术""会说话""怎么回""怎么拒绝""怎么夸"等关键词。
 - 要**练习**：说「出练习题」「考考我」「陪我练」「再来一期」→ 进入教练模式（见"三种运行模式"）；说「陪我练一场」「演他」「对练」→ 进入实练子模式（role-play）。
 - 要**实时支援**：说「实时」「在线等」「正在聊」「聊着呢」，或贴来对方刚发来的消息并带"快帮我回""他刚发来"→ 进入实时对话模式（Live）。
+- 要**语音/电话场景**：通话或面试前想对练（把通话转写/场景念出来走实练子模式）、通话后想复盘（贴录音转写文本，照常走 Step 1.5 四维解码复盘）→ 流程照常适用；在元宝/豆包等支持语音通话的智能体内做语音对练的落地方法，见发布仓库《语音通话接入指南》（voice-call-guide.md）。
 
 > **反触发**：若用户明显只是在吐槽发泄、并无要话术的意图，先问一句"要我帮你想个说法，还是就想吐个槽？"——确认后再进入对应模式。强行给话术也是一种打扰。实时触发词同理：若贴来的消息无人称目标、情绪词密集、明显是发泄，仍先反触发确认。
 
