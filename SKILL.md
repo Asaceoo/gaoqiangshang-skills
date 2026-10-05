@@ -4,8 +4,7 @@ display_name: "高情商聊天"
 display_name_en: "High-EQ Chat Master"
 description: "高情商聊天与沟通技能。融合全网高情商话术、高情商沟通经典书籍（非暴力沟通、关键对话、蔡康永说话之道、人性的弱点、好好说话等）与高情商聊天大师（何炅、黄渤、蔡康永、汪涵等）方法论，覆盖两性情感、亲密情感、职场沟通、职场谈判、生活社交等多领域。当用户需要写高情商话术、聊天回复、化解尴尬、安慰、拒绝、夸人、说服、谈判、职场沟通、亲密关系沟通、恋爱聊天，或遇到「不知道怎么接话」「怕说错话得罪人」等场景时使用。核心机制是生成话术前必须经过 3~5 遍自我检查（说话语气、说话环境、说话方式、逻辑错误、情感边界等），确保话术得体、有分寸、不踩雷。"
 description_en: "A high-EQ chat and communication skill. It fuses popular high-EQ conversation techniques, classic communication books (Nonviolent Communication, Crucial Conversations, Kevin Tsai's The Art of Speaking, How to Win Friends and Influence People, etc.) and the methods of high-EQ masters (He Jiong, Huang Bo, Kevin Tsai, Wang Han), covering romance, intimate relationships, workplace communication, negotiation, and daily social scenarios. Use it when the user needs high-EQ replies, chat responses, defusing awkwardness, comforting, polite refusal, compliments, persuasion, negotiation, or relationship communication. Core mechanism - every script must pass 3-5 rounds of self-review (tone, context, manner, logic, emotional boundaries) before delivery."
-description_zh: "高情商聊天与沟通技能。融合全网高情商话术、高情商沟通经典书籍（非暴力沟通、关键对话、蔡康永说话之道、人性的弱点、好好说话等）与高情商聊天大师（何炅、黄渤、蔡康永、汪涵等）方法论，覆盖两性情感、亲密情感、职场沟通、职场谈判、生活社交等多领域。当用户需要写高情商话术、聊天回复、化解尴尬、安慰、拒绝、夸人、说服、谈判、职场沟通、亲密关系沟通、恋爱聊天，或遇到「不知道怎么接话」「怕说错话得罪人」等场景时使用。核心机制是生成话术前必须经过 3~5 遍自我检查（说话语气、说话环境、说话方式、逻辑错误、情感边界等），确保话术得体、有分寸、不踩雷。"
-version: "1.3.1"
+version: "1.3.2"
 agent_created: true
 ---
 
@@ -29,13 +28,15 @@ agent_created: true
 - 明确提到"高情商""话术""会说话""怎么回""怎么拒绝""怎么夸"等关键词。
 - 要**练习**：说「出练习题」「考考我」「陪我练」「再来一期」→ 进入教练模式（见"两种运行模式"）。
 
+> **反触发**：若用户明显只是在吐槽发泄、并无要话术的意图，先问一句"要我帮你想个说法，还是就想吐个槽？"——确认后再进入对应模式。强行给话术也是一种打扰。
+
 ## 两种运行模式
 
 **模式 A：实战模式（默认）**——用户拿来真实场景，走下方"核心工作流"直接产出话术。
 
 **模式 B：教练模式（练习）**——目标不是替用户说，而是训练用户自己"会说话"。流程：
 
-1. **出题**：按用户指定（或轮换）场景域出 1~3 题，每题给出情境 + 低情商直觉版，要求用户**先写自己的答案**；难度渐进（★→★★★），高风险场景（金钱/当众/亲密冲突）明确标注。
+1. **出题**：按用户指定（或轮换）场景域出 1~3 题，每题给出情境 + 低情商直觉版，要求用户**先写自己的答案**；难度渐进，标准为：★=单句回应（一次交锋）、★★=多轮对话或需主动破局、★★★=当众/对抗/金钱/亲密冲突等高风险。🔴 **CHECKPOINT：出题后必须停下等待用户作答，不得跳过自答环节直接给答案。**
 2. **对照**：用户作答后，给参考话术（参考话术同样必须通过 Step 4 自检）+ 底层公式 + 为什么有效 + 避坑提醒。
 3. **点评**：对照 `references/05-自我检查清单.md` 逐条点评用户答案——指出触犯了哪条雷区、哪里是闪光点，并给修改版。
 4. **出题素材**：优先取自 references 各话术库的真实场景；也可基于 `references/07-用户关系档案.md` 里的真实关系出题（更贴近实战）。
@@ -71,7 +72,7 @@ agent_created: true
 
 ### Step 3：产出话术初稿
 
-从话术库中选取/组合最匹配的公式，结合用户的具体情况，写出**1~3 版候选话术**（语气不同、风格不同，供用户选择）。每版都要落到"这一句具体怎么说"。
+从话术库中选取/组合最匹配的公式，结合用户的具体情况，写出**1~3 版候选话术**，按三型区分：**直接型**（爽快但有理有据）、**委婉型**（先共情后立场）、**幽默型**（自嘲或转移焦点）。每版都要落到"这一句具体怎么说"。
 
 ### Step 4：自我检查 3~5 遍（核心机制，不可跳过）
 
@@ -88,7 +89,9 @@ agent_created: true
 
 > 检查发现问题就**回到 Step 3 重写**，直到通过为止。不要为了"显得会说话"而堆砌油腻话术。
 >
-> 检查完成后，在最终输出中**附一行自检记录**（如 `✅ 自检：3 遍通过（低风险）` 或 `✅ 自检：5 遍通过（高风险·金钱+当众）`），让用户知道话术过了哪道关、按什么标准过的。
+> 🛑 **STOP：高风险场景（金钱/当众/亲密冲突/职场对抗）的话术，在 5 遍自检完成前不得输出给用户——宁可慢，不可漏。**
+>
+> 检查完成后，在最终输出中**附一行自检记录**（如 `✅ 自检：3 遍通过（低风险）` 或 `✅ 自检：5 遍通过（高风险·金钱+当众）`），让用户知道话术过了哪道关、按什么标准过的。重写版（含 fallback 触发的重写）同样必须走本步骤。
 
 ### Step 5：输出最终话术
 
