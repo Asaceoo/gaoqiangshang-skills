@@ -4,7 +4,7 @@ display_name: "高情商聊天"
 display_name_en: "High-EQ Chat Master"
 description: "高情商聊天与沟通技能。融合全网高情商话术、高情商沟通经典书籍（非暴力沟通、关键对话、蔡康永说话之道、人性的弱点、好好说话等）与高情商聊天大师（何炅、黄渤、蔡康永、汪涵等）方法论，覆盖两性情感、亲密情感、职场沟通、职场谈判、生活社交等多领域。当用户需要写高情商话术、聊天回复、化解尴尬、安慰、拒绝、夸人、说服、谈判、职场沟通、亲密关系沟通、恋爱聊天，或遇到「不知道怎么接话」「怕说错话得罪人」等场景时使用。核心机制是生成话术前必须经过 3~5 遍自我检查（说话语气、说话环境、说话方式、逻辑错误、情感边界等），确保话术得体、有分寸、不踩雷。"
 description_en: "A high-EQ chat and communication skill. It fuses popular high-EQ conversation techniques, classic communication books (Nonviolent Communication, Crucial Conversations, Kevin Tsai's The Art of Speaking, How to Win Friends and Influence People, etc.) and the methods of high-EQ masters (He Jiong, Huang Bo, Kevin Tsai, Wang Han), covering romance, intimate relationships, workplace communication, negotiation, and daily social scenarios. Use it when the user needs high-EQ replies, chat responses, defusing awkwardness, comforting, polite refusal, compliments, persuasion, negotiation, or relationship communication. Core mechanism - every script must pass 3-5 rounds of self-review (tone, context, manner, logic, emotional boundaries) before delivery."
-version: "1.5.1"
+version: "1.6.0"
 agent_created: true
 ---
 
@@ -99,6 +99,8 @@ agent_created: true
 | 职场沟通 / 谈判 / 向上管理 / 协作 | `references/03-职场沟通与谈判话术库.md` |
 | 饭局 / 亲戚 / 朋友 / 社交 / 夸人 / 拒绝 / 安慰 | `references/04-生活社交话术库.md` |
 | 客户甲方 / 跨部门冲突 / 公开即兴发言 / 道歉 / 离职谈薪 / 微信文字规范 / 长对话谈判 | `references/06-扩展场景话术库.md` |
+| 经典书籍方法论深化（FBI 战术同理心 / 高难度谈话三层 / 戈特曼修复句库 / 爱的五种语言 / 影响力 / 哈佛谈判）——对方情绪对抗、僵持、翻车复盘时优先查 | `references/08-经典书籍方法论库.md` |
+| 高频场景对照（直觉版 vs 高情商版 32 条快查，按场景域检索）——拿不准怎么开口时先找同类场景 | `references/09-高频场景回复案例集.md` |
 | 用户的人际关系档案（**接到请求先读**，能对上号就不再追问关系与场景） | `references/07-用户关系档案.md` |
 | 自我检查清单（每遍该查什么） | `references/05-自我检查清单.md` |
 
@@ -180,3 +182,5 @@ agent_created: true
 - `05-自我检查清单.md` —— 3~5 遍自检的完整检查项与常见雷区。
 - `06-扩展场景话术库.md` —— 客户/甲方、跨部门冲突、公开即兴发言、真诚道歉、离职谈薪、微信文字沟通规范、长对话谈判策略。
 - `07-用户关系档案.md` —— 用户人际关系档案（经用户同意后维护），减少重复追问。
+- `08-经典书籍方法论库.md` —— 10 部经典深化（掌控谈话战术同理心六步/标注句库/校准问题表、高难度谈话三层对话、戈特曼四骑士+修复尝试句库、爱的五种语言、影响力六武器、哈佛谈判、关键冲突分层、NVC 倾听篇）+ 症状检索速查表。
+- `09-高频场景回复案例集.md` —— 5 大场景域 32 条「直觉版 vs 高情商版」对照（职场对领导/对同事、亲密关系、家庭亲戚、朋友社交、社交微句），每条标注底层公式，附直觉版翻车共性规律复盘。
