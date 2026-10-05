@@ -4,7 +4,7 @@ display_name: "高情商聊天"
 display_name_en: "High-EQ Chat Master"
 description: "高情商聊天与沟通技能。融合全网高情商话术、高情商沟通经典书籍（非暴力沟通、关键对话、蔡康永说话之道、人性的弱点、好好说话等）与高情商聊天大师（何炅、黄渤、蔡康永、汪涵等）方法论，覆盖两性情感、亲密情感、职场沟通、职场谈判、生活社交等多领域。当用户需要写高情商话术、聊天回复、化解尴尬、安慰、拒绝、夸人、说服、谈判、职场沟通、亲密关系沟通、恋爱聊天，或遇到「不知道怎么接话」「怕说错话得罪人」等场景时使用。核心机制是生成话术前必须经过 3~5 遍自我检查（说话语气、说话环境、说话方式、逻辑错误、情感边界等），确保话术得体、有分寸、不踩雷。"
 description_en: "A high-EQ chat and communication skill. It fuses popular high-EQ conversation techniques, classic communication books (Nonviolent Communication, Crucial Conversations, Kevin Tsai's The Art of Speaking, How to Win Friends and Influence People, etc.) and the methods of high-EQ masters (He Jiong, Huang Bo, Kevin Tsai, Wang Han), covering romance, intimate relationships, workplace communication, negotiation, and daily social scenarios. Use it when the user needs high-EQ replies, chat responses, defusing awkwardness, comforting, polite refusal, compliments, persuasion, negotiation, or relationship communication. Core mechanism - every script must pass 3-5 rounds of self-review (tone, context, manner, logic, emotional boundaries) before delivery."
-version: "1.7.0"
+version: "1.8.0"
 agent_created: true
 ---
 
@@ -177,9 +177,9 @@ agent_created: true
 话术库与检查清单按需加载到 `references/` 中：
 
 - `01-核心方法论与大师.md` —— 经典书籍方法论（非暴力沟通四步法、关键对话、蔡康永、好好说话五维、卡耐基等）+ 大师话术智慧（何炅、黄渤、汪涵、蔡康永、贾玲等），是底层逻辑。
-- `02-两性情感与亲密关系话术库.md` —— 六阶段判定表（破冰/了解/升温/邀约/确认/遇冷）+ 暧昧期/热恋期/稳定期/邀约推进/遇冷重启分阶段话术 + 吵架和解 + 情绪价值表达。
-- `03-职场沟通与谈判话术库.md` —— 拒绝、反馈、协作、向上管理、救场、谈判、被批评等 8 大类。
-- `04-生活社交话术库.md` —— 饭局救场、被追问隐私、夸人、安慰、拒绝、破冰等 20+ 高频场景。
+- `02-两性情感与亲密关系话术库.md` —— 六阶段判定表（破冰/了解/升温/邀约/确认/遇冷）+ 暧昧期/热恋期/稳定期/邀约推进/遇冷重启分阶段话术 + 吵架和解 + 情绪价值表达 + v1.8.0 高难度 8 场景（见家长/异地恋/彩礼金钱/父母伴侣冲突/被冷暴力/伴侣事业低谷/前任与手机边界/确认型提问）。
+- `03-职场沟通与谈判话术库.md` —— 拒绝、反馈、协作、向上管理、救场、谈判、被批评等 8 大类 + v1.8.0 关键节点 8 场景（绩效面谈/竞聘述职/提离职/被挽留/裁员谈话/向领导提反对意见/带新人/会议控场）。
+- `04-生活社交话术库.md` —— 饭局救场、被追问隐私、夸人、安慰、拒绝、破冰等 20+ 高频场景 + v1.8.0 人情与边界 9 场景（红白事/探病/同学会/邻里业主群/家长群/相亲/砍价交易/请客AA/对服务人员）。
 - `05-自我检查清单.md` —— 3~5 遍自检的完整检查项与常见雷区。
 - `06-扩展场景话术库.md` —— 客户/甲方、跨部门冲突、公开即兴发言、真诚道歉、离职谈薪、微信文字沟通规范、长对话谈判策略。
 - `07-用户关系档案.md` —— 用户人际关系档案（经用户同意后维护），减少重复追问。
