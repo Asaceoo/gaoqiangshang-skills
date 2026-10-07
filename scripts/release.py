@@ -335,7 +335,7 @@ def cmd_verify(args):
         idx_rows = len(re.findall(r'^\|(?!\s*什么情况|\s*-)', idx_m.group(0), re.M))
         chk(idx_rows >= 60, f'场景索引条目充足（{idx_rows} 行）')
         secs_idx = set(re.findall(r'§(\d+)', idx_m.group(0)))
-        chk(len(secs_idx) >= 50, f'场景索引覆盖节数充足（{len(secs_idx)} 节）')
+        chk(len(secs_idx) >= 54, f'场景索引覆盖节数充足（{len(secs_idx)} 节，阈值 54）')
     else:
         fails.append('11 库场景索引块无法定位')
 
@@ -345,10 +345,10 @@ def cmd_verify(args):
     c09_toc = re.search(r'^## 目录.*?(?=^## )', c09_txt, re.S | re.M)
     if c09_toc:
         cov = set()
-        for mm in re.finditer(r'^\|\s*[^|]+\|\s*((?:#\d+(?:-\d+)?[、]?)+)\s*\|', c09_toc.group(0), re.M):
-            for a, b in re.findall(r'#(\d+)(?:-(\d+))?', mm.group(1)):
-                a2 = int(a); b2 = int(b) if b else a2
-                cov.update(range(a2, b2 + 1))
+        # 09 场景层表头是 2 列（什么情况 | 条目号），直接在全目录区提取 #N 引用
+        for a, b in re.findall(r'#(\d+)(?:-(\d+))?', c09_toc.group(0)):
+            a2 = int(a); b2 = int(b) if b else a2
+            cov.update(range(a2, b2 + 1))
         real_total = len(re.findall(r'^\|\s*\d+\s*\|', c09_txt, re.M))
         chk(len(cov) >= real_total, f'09 库场景层覆盖全部条目（{len(cov)}/{real_total}）')
 
@@ -364,7 +364,8 @@ def cmd_verify(args):
     _secs_real = {_cn2i(m.group(1)) for m in re.finditer(r'^##\s+([一二三四五六七八九十]+)、', c11_txt2, re.M)}
     _secs_real.discard(None)
     if idx_m:
-        _idx_secs = {int(x) for x in re.findall(r'§(\d+)(?!\.)', idx_m.group(0))}
+        # 用边界断言避免 §59.1 回溯出幻影 §5
+        _idx_secs = {int(x) for x in re.findall(r'§(\d+)(?![.\d])', idx_m.group(0))}
         _dead = sorted(_idx_secs - _secs_real)
         chk(not _dead, '场景索引引用的节号全部存在', str(_dead[:5]))
         # 索引使用中的 §N.M 小节须可达
