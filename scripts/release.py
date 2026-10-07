@@ -400,6 +400,21 @@ def cmd_verify(args):
     _extra = _present - _allowed
     chk(not _extra, 'frontmatter 无无效字段（运行时仅读 name/description）', str(sorted(_extra)))
 
+    # 19 【v1.37.5 新增】索引回归测试（用例来自独立对抗验证，含作者盲区）
+    _reg = os.path.join(ROOT, 'tests', 'index_regression.py')
+    if os.path.exists(_reg):
+        import subprocess as _sp
+        _r = _sp.run([sys.executable, _reg], capture_output=True, text=True, encoding='utf-8')
+        _m = re.search(r'命中 (\d+)/(\d+)', _r.stdout or '')
+        if _m:
+            _h, _t = int(_m.group(1)), int(_m.group(2))
+            chk(_h == _t, f'索引回归测试全部命中（{_h}/{_t}）',
+                '缺口见 tests/index_regression.json')
+        else:
+            chk(False, '索引回归测试可运行', '无统计输出')
+    else:
+        warns.append('未找到 tests/index_regression.py，跳过索引回归')
+
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')
     for w in warns: print(f'  ⚠️  {w}')
