@@ -97,6 +97,9 @@ def cmd_bump(args):
     r2 = re.sub(r'(#\s*高情商聊天技能（gaoqing-shang-liaotian）)v[\d.]+', rf'\g<1>{new}', r, count=1)
     n_hist = len(re.findall(r'（当前版本 \*\*v[\d.]+\*\*）', r2))
     r2 = re.sub(r'（当前版本 \*\*v[\d.]+\*\*）', f'（当前版本 **{new}**）', r2)
+    if not re.search(r'（当前版本 \*\*v[\d.]+\*\*）', r2):
+        # 【v1.39.3 修复】原缺陷：版本历史行缺失时静默跳过（工具闭环实测发现）
+        print('  ⚠️ README 未找到「（当前版本 **vX**）」声明行，跳过同步——请手动补回该行，否则 verify 将报警')
     open(README,'w',encoding='utf-8').write(r2)
     print(f'  ✓ 用户手册 README.md → {new}（标题行 + 版本历史 {n_hist} 处）')
 
@@ -134,7 +137,10 @@ def cmd_verify(args):
     """清单式兜底校验"""
     fails, warns, oks = [], [], []
     def chk(cond, name, detail=''):
-        (oks if cond else fails).append(f'{name}' + (f' — {detail}' if detail else ''))
+        # 【v1.39.3 修复】detail 只在失败时显示。
+        # 原缺陷：detail 无条件追加，导致成功行也挂着「正则零匹配，断言形同虚设」等
+        # 失败说明，读者会误以为校验有问题（工具闭环实测发现）。
+        (oks if cond else fails).append(f'{name}' + (f' — {detail}' if (detail and not cond) else ''))
 
     # 1 必需文件
     # 分发包必需文件（与 pack 白名单一致 + 开发用文件单列）
@@ -457,6 +463,30 @@ def cmd_verify(args):
             chk(len(_overlap) <= 40,
                 f'09 场景层区间重叠可控（{len(_overlap)} 个，阈值 40）',
                 f'过高说明区间接管过宽，样例 {sorted(_overlap)[:6]}')
+
+            # 21b 【v1.39.3 修复·补盲区】已知错配的精确断言（宽松阈值抓不住复发）
+            # 破坏测试 (h) 证实：家长群 #198-200 → #191-200 只加 3 个重叠（23→26），
+            # 宽松阈值 ≤40 完全漏掉。此处对 v1.38.0 修过的错配做精确锚定：
+            _must_rows = {
+                '装修增项、材料调包、验收扯皮': '#191-194',
+                '闲鱼收货不符、退货扯皮、差评威胁': '#195-197',
+                '家长群、老师点名、作业量与育儿沟通': '#198-200',
+                '陪诊陪护、认知症老人就医、陪诊员资质': '#275-277',
+                '养老分工推诿、老人不愿被照顾': '#228-230',
+                '求职陷阱吸费、试岗白干、简历夸大': '#271-274',
+                '被要求写辞职、只给 N、离职后被找麻烦': '#278-280',
+            }
+            _lay_all = _lay.group(0)
+            _bad_map = []
+            for _topic, _range in _must_rows.items():
+                _found = [l for l in _lay_all.split('\n') if _topic in l]
+                if not _found:
+                    _bad_map.append(f'「{_topic[:18]}」行缺失')
+                elif _range not in _found[0]:
+                    _bad_map.append(f'「{_topic[:18]}」应为 {_range}，实为 {_found[0].split("|")[2].strip() if _found[0].count("|")>=3 else "?"}')
+            chk(not _bad_map,
+                f'09 场景层已知错配精确锚定（{len(_must_rows)} 条映射逐一核对）',
+                f'错配复发: {_bad_map[:3]}')
 
     # 22 【v1.37.6 新增】内容质量回归（法律准确性/红线一致性/过期声明）
     _ct = os.path.join(ROOT, 'tests', 'content_regression.py')
