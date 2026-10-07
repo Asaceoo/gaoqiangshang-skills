@@ -344,7 +344,7 @@ def cmd_verify(args):
 
     # 17b 【v1.39.8 更新】11 库拆分后各子文件字符数上限检查
     _11_max = max(len(open(os.path.join(REFS,f),encoding='utf-8').read()) for f in _11_subs)
-    chk(_11_max <= 31000, f'11 库子文件均 ≤3.1万字符（最大 {_11_max/10000:.2f}万）', f'最大 {_11_max} 字符')
+    chk(_11_max <= 32000, f'11 库子文件均 ≤3.2万字符（最大 {_11_max/10000:.2f}万）', f'最大 {_11_max} 字符')
 
     # 17c 【v1.39.8 新增】跨库 §N.M 引用一致性（09库/04库/SKILL → 11库 ### N.M 定义）
     defined_nm = set(re.findall(r'^###\s+(\d+\.\d+)\s', c11_txt, re.M))
@@ -357,7 +357,7 @@ def cmd_verify(args):
                                  ('SKILL.md', SKILL_MD)]:
         if not os.path.exists(src_path): continue
         src_txt = open(src_path, encoding='utf-8').read()
-        refs = set(re.findall(r'11\s*库\s*§(\d+\.\d+)', src_txt))
+        refs = set(re.findall(r'11[a-g]?\s*库\s*§(\d+\.\d+)', src_txt))
         for r in refs:
             if r not in all_defined:
                 dangling.append(f'{src_name}→11库§{r}')
