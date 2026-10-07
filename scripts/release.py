@@ -372,6 +372,24 @@ def cmd_verify(args):
         _isub = {(int(a), int(b)) for a, b in re.findall(r'§(\d+)\.(\d+)', idx_m.group(0))}
         _deadsub = sorted(_isub - _subs)
         chk(not _deadsub, '场景索引 §N.M 引用全部可达', str(_deadsub[:5]))
+        # 两套检索入口不得对同一问题指向互斥的节（防冲突复发）
+        _B = None
+        _m5 = re.search(r'^##\s*五、「症状 → 方法」检索速查表（本库）\s*$', c11_txt2, re.M)
+        _m7 = re.search(r'^##\s*七、', c11_txt2, re.M)
+        if _m5 and _m7:
+            _Btxt = c11_txt2[_m5.start():_m7.start()]
+            _conflict = []
+            for _qa, _sa in re.findall(r'^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|', idx_m.group(0), re.M):
+                _as = {int(y) for y in re.findall(r'§\s*(\d+)', _sa)}
+                if not _as or '你会怎么说' in _qa: continue
+                _kws = [k for k in re.findall(r'[\u4e00-\u9fa5]{2,}', _qa)]
+                for _qb, _sb in re.findall(r'^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|', _Btxt, re.M):
+                    if '症状' in _qb: continue
+                    if sum(1 for k in _kws if k in _qb) >= 2:
+                        _bs = {int(y) for y in re.findall(r'§\s*(\d+)', _sb)}
+                        if _bs and not (_as & _bs):
+                            _conflict.append((_qa[:24], sorted(_as), sorted(_bs)))
+            chk(not _conflict, '两套检索入口无互斥指向', str(_conflict[:3]))
     chk(c11_txt2.count('⏳') >= 10, f'11 库时效标记充足（{c11_txt2.count("⏳")} 处）')
 
     _sk = open(SKILL_MD, encoding='utf-8').read()
