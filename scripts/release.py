@@ -353,6 +353,25 @@ def cmd_verify(args):
         chk(len(cov) >= real_total, f'09 库场景层覆盖全部条目（{len(cov)}/{real_total}）')
 
     chk('数据时效说明' in c11_txt2, '11 库含平台数据时效说明')
+    # 场景索引引用的节号必须真实存在（防索引腐化）
+    _CN = '一二三四五六七八九十'
+    def _cn2i(x):
+        if x == '十': return 10
+        if x.startswith('十'): return 10 + _CN.index(x[1]) + 1
+        if '十' in x:
+            a, b = x.split('十'); return (_CN.index(a)+1)*10 + (_CN.index(b)+1 if b else 0)
+        return _CN.index(x)+1 if x in _CN else None
+    _secs_real = {_cn2i(m.group(1)) for m in re.finditer(r'^##\s+([一二三四五六七八九十]+)、', c11_txt2, re.M)}
+    _secs_real.discard(None)
+    if idx_m:
+        _idx_secs = {int(x) for x in re.findall(r'§(\d+)(?!\.)', idx_m.group(0))}
+        _dead = sorted(_idx_secs - _secs_real)
+        chk(not _dead, '场景索引引用的节号全部存在', str(_dead[:5]))
+        # 索引使用中的 §N.M 小节须可达
+        _subs = {(int(a), int(b)) for a, b in re.findall(r'^#{3,4}\s*(?:§\s*)?(\d+)\.(\d+)', c11_txt2, re.M)}
+        _isub = {(int(a), int(b)) for a, b in re.findall(r'§(\d+)\.(\d+)', idx_m.group(0))}
+        _deadsub = sorted(_isub - _subs)
+        chk(not _deadsub, '场景索引 §N.M 引用全部可达', str(_deadsub[:5]))
     chk(c11_txt2.count('⏳') >= 10, f'11 库时效标记充足（{c11_txt2.count("⏳")} 处）')
 
     _sk = open(SKILL_MD, encoding='utf-8').read()
