@@ -369,6 +369,15 @@ def cmd_verify(args):
                 dangling.append(f'{src_name}→11库§{r}')
     chk(not dangling, f'跨库 §N.M 引用全可达（11库定义 {len(all_defined)} 个）', str(dangling[:6]))
 
+    # 17d 【v1.40.1 新增】token 预算检查（SKILL + 任一单库 ≤ 25K token）
+    _sk_tok = len(open(SKILL_MD, encoding='utf-8').read()) // 3
+    _max_lib_tok = max(len(open(os.path.join(REFS,f), encoding='utf-8').read()) // 3 for f in os.listdir(REFS) if f.endswith('.md'))
+    chk(_sk_tok + _max_lib_tok <= 25000, f'token 预算：SKILL+最大单库 ≤25K（SKILL {_sk_tok}+最大 {_max_lib_tok}={_sk_tok+_max_lib_tok}）', f'超限 {_sk_tok+_max_lib_tok}')
+
+    # 17e 【v1.40.1 新增】11 库子文件 ⏳ 时效标记分布检查
+    _no_marker = [f for f in _11_subs if open(os.path.join(REFS,f), encoding='utf-8').read().count('⏳') < 1]
+    chk(not _no_marker, '11 库每个子文件至少 1 个 ⏳ 时效标记', f'缺失: {_no_marker}')
+
     # 18 【v1.36.4 新增】内容架构优化防回归
     c11_txt2 = open(os.path.join(REFS,'11a-索引与平台调研.md'), encoding='utf-8').read()
     chk('## 场景索引' in c11_txt2, '11 库含场景索引（按用户问法导航）')

@@ -100,6 +100,16 @@ c09 = '\n'.join(open(os.path.join(REFS, f), encoding='utf-8').read() for f in _0
 refs_09 = set(re.findall(r'11([a-g])\s*库\s*§(\d+\.\d+)', c09))
 dangling = [(p, r) for p, r in refs_09 if r not in defined]
 check(not dangling, f'09库→11X库引用全可达（{len(refs_09)} unique）', str(dangling[:3]))
+# v1.40.1 新增：04库→11X库引用可达性
+if os.path.exists(os.path.join(REFS, '04-生活社交话术库.md')):
+    c04 = open(os.path.join(REFS, '04-生活社交话术库.md'), encoding='utf-8').read()
+    refs_04 = set(re.findall(r'11([a-g])\s*库\s*§(\d+\.\d+)', c04))
+    dangling_04 = [(p, r) for p, r in refs_04 if r not in defined]
+    check(not dangling_04, f'04库→11X库引用全可达（{len(refs_04)} unique）', str(dangling_04[:3]))
+# v1.40.1 新增：SKILL.md→11X库引用可达性
+refs_sk = set(re.findall(r'11([a-g])\s*库\s*§(\d+\.\d+)', sk))
+dangling_sk = [(p, r) for p, r in refs_sk if r not in defined]
+check(not dangling_sk, f'SKILL.md→11X库引用全可达（{len(refs_sk)} unique）', str(dangling_sk[:3]))
 
 # === 结果 ===
 print('\n' + '=' * 70)
