@@ -415,6 +415,71 @@ def cmd_verify(args):
     else:
         warns.append('未找到 tests/index_regression.py，跳过索引回归')
 
+    # 20 【v1.37.6 新增】边界与鲁棒性回归（铁律/超范围/触发词冲突）
+    _edge = os.path.join(ROOT, 'tests', 'edge_regression.py')
+    if os.path.exists(_edge):
+        import subprocess as _sp2
+        _r2 = _sp2.run([sys.executable, _edge], capture_output=True, text=True, encoding='utf-8')
+        _m2 = re.search(r'通过 (\d+)/(\d+)', _r2.stdout or '')
+        if _m2:
+            _h2, _t2 = int(_m2.group(1)), int(_m2.group(2))
+            chk(_h2 == _t2, f'边界回归测试全部通过（{_h2}/{_t2}）',
+                '缺口见 tests/edge_regression.json')
+        else:
+            chk(False, '边界回归测试可运行', '无统计输出')
+    else:
+        warns.append('未找到 tests/edge_regression.py，跳过边界回归')
+
+    # 21 【v1.37.6 新增】09 场景层区间不得跨话题重叠（防「家长群读到装修」类错配）
+    _c09b = open(os.path.join(REFS,'09-高频场景回复案例集.md'), encoding='utf-8').read()
+    _toc9 = re.search(r'^## 目录.*?(?=^## )', _c09b, re.S | re.M)
+    if _toc9:
+        _lay = re.search(r'### 🎯 场景层.*?(?=### 📚 批次层)', _toc9.group(0), re.S)
+        if _lay:
+            from collections import defaultdict as _dd
+            _rev = _dd(set)
+            _cur = None
+            for _l in _lay.group(0).split('\n'):
+                _m = re.match(r'^\*\*(.+?)\*\*$', _l.strip())
+                if _m: _cur = _m.group(1); continue
+                if not _l.strip().startswith('|') or _l.count('|') < 3: continue
+                _p = [x.strip() for x in _l.strip().strip('|').split('|')]
+                if len(_p) < 2 or _p[0] in ('什么情况',) or set(_p[0]) <= set('-'): continue
+                for _a, _b in re.findall(r'#(\d+)(?:-(\d+))?', _p[1]):
+                    _a2 = int(_a); _b2 = int(_b) if _b else _a2
+                    for _k in range(_a2, _b2+1): _rev[_k].add(_cur)
+            _overlap = {k: v for k, v in _rev.items() if len(v) >= 2}
+            # 同一区间被两个「消费/生活」类话题认领属错配；职场跨部门等合理重叠不报
+            chk(len(_overlap) <= 40,
+                f'09 场景层区间重叠可控（{len(_overlap)} 个，阈值 40）',
+                f'过高说明区间接管过宽，样例 {sorted(_overlap)[:6]}')
+
+    # 22 【v1.37.6 新增】内容质量回归（法律准确性/红线一致性/过期声明）
+    _ct = os.path.join(ROOT, 'tests', 'content_regression.py')
+    if os.path.exists(_ct):
+        import subprocess as _sp3
+        _r3 = _sp3.run([sys.executable, _ct], capture_output=True, text=True, encoding='utf-8')
+        _m3 = re.search(r'失败项：(\d+)', _r3.stdout or '')
+        if _m3:
+            _f3 = int(_m3.group(1))
+            chk(_f3 == 0, f'内容质量回归全部通过（{_f3} 项失败）',
+                '问题见 tests/content_regression.json')
+        else:
+            chk(False, '内容质量回归可运行', '无统计输出')
+    else:
+        warns.append('未找到 tests/content_regression.py，跳过内容回归')
+
+    # 23 【v1.37.6 新增·修 D 线指出的空断言】关键断言须有实际匹配量
+    # D 线指出：verify 输出自身暴露 2 项「正则零匹配」的空断言 —— 此处显式校验
+    _empty_guard = [
+        ('README→SKILL 引用', len(re.findall(r'（见\s*SKILL\.md[「"“]([^」"”]+)[」"”]）', open(README, encoding='utf-8').read()))),
+        ('09库口径声明', len(re.findall(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt2))),
+        ('场景索引条目', len(re.findall(r'^\|(?!\s*你会怎么说|\s*-)', idx_m.group(0), re.M)) if idx_m else 0),
+        ('09场景层条目', len(re.findall(r'^\|\s*[^|]+\s*\|\s*#', _toc9.group(0), re.M)) if _toc9 else 0),
+    ]
+    for _n, _c in _empty_guard:
+        chk(_c > 0, f'断言有效性：{_n} 有实际匹配（{_c}）', '零匹配=空断言')
+
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')
     for w in warns: print(f'  ⚠️  {w}')

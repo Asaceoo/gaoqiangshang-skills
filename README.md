@@ -1,4 +1,4 @@
-# 高情商聊天技能（gaoqing-shang-liaotian）v1.37.5
+# 高情商聊天技能（gaoqing-shang-liaotian）v1.38.0
 
 > 通用版高情商沟通技能 —— **任何 AI 智能体都能用**：Claude / Claude Code / Cursor / WPS AI / WorkBuddy / OpenClaw / 任意支持自定义指令的对话产品。
 >

@@ -1,0 +1,133 @@
+{
+  "_readme": "内容质量回归测试。用例来自独立审查（indep-D-quality.md），覆盖法律准确性、红线一致性、口径漂移。",
+  "_why": "前三套测试（索引/边界）都不验「内容事实正确性」——而独立审查发现的 4 项法律错误全部逃过了 48 项自动自检。",
+  "_usage": "python tests/content_regression.py",
+  "_baseline": "v1.37.6 修复后全部通过",
+  "legal": [
+    {
+      "id": "L1",
+      "topic": "定金成立要件",
+      "must_contain": [
+        "实际交付定金"
+      ],
+      "must_not_contain": [
+        "必须书面约定才成立"
+      ],
+      "basis": "民法典 586 条：定金合同自实际交付定金时成立（书面非成立要件，仅证据价值）",
+      "source": "D线 P0-1"
+    },
+    {
+      "id": "L2",
+      "topic": "主动辞职与经济补偿",
+      "must_contain": [
+        "主动辞职没有经济补偿"
+      ],
+      "must_not_contain": [
+        "只有主动辞职才是 N"
+      ],
+      "basis": "主动辞职无补偿；协商解除（公司提出）付 N，未提前 30 天通知 +1",
+      "source": "D线 P0-2"
+    },
+    {
+      "id": "L3",
+      "topic": "非法吸收公众存款罪条号",
+      "must_contain": [
+        "176 条"
+      ],
+      "must_not_contain": [
+        "非法吸收公众存款罪（142 条）"
+      ],
+      "basis": "刑法 176 条为非法吸收公众存款罪；142 条是生产销售假药罪",
+      "source": "D线 P0-3"
+    },
+    {
+      "id": "L4",
+      "topic": "金融监管机构名称",
+      "must_not_contain": [
+        "银保监会"
+      ],
+      "basis": "2023 年银保监会已更名为国家金融监督管理总局（CHANGELOG 中为历史记录，不在此列）",
+      "source": "D线 P0-4",
+      "scope": "references_only"
+    },
+    {
+      "id": "L5",
+      "topic": "违约金条款（已核实准确）",
+      "must_contain": [
+        "22/23/25"
+      ],
+      "basis": "劳动合同法第 25 条为禁止性兜底，仅 22、23 两种情形可约定违约金",
+      "source": "D线 确认准确项，防回退"
+    },
+    {
+      "id": "L6",
+      "topic": "定金 20% 上限",
+      "must_contain": [
+        "20%"
+      ],
+      "basis": "民法典 586 条：定金数额不得超过主合同标的额 20%",
+      "source": "D线 确认准确项，防回退"
+    }
+  ],
+  "consistency": [
+    {
+      "id": "C1",
+      "topic": "铁律3 不当众揭短 vs 话术实践",
+      "must_not_contain": [
+        "主责在王老师"
+      ],
+      "must_contain": [
+        "不点名"
+      ],
+      "basis": "11 库 §11.2 / 09 库 #92 曾教「群里点名主责」，违反铁律 3",
+      "source": "A线 P2-1 / D线"
+    },
+    {
+      "id": "C2",
+      "topic": "模式C 自检记录行",
+      "must_contain": [
+        "不豁免自检记录"
+      ],
+      "basis": "原 L62 压缩格式无自检行，但 L169/L179 要求必须附",
+      "source": "A线 P1-1"
+    },
+    {
+      "id": "C3",
+      "topic": "模式C 切A 后格式",
+      "must_contain": [
+        "格式同步切换"
+      ],
+      "basis": "原未裁定切回模式 A 后用 Step5 还是 C 压缩格式",
+      "source": "A线 P2-3"
+    }
+  ],
+  "stale_claims": [
+    {
+      "id": "S1",
+      "topic": "SKILL 导航坐标",
+      "rule": "offset 指向实际章节",
+      "expect_actual": {
+        "场景索引": 74,
+        "症状速查表": 468
+      },
+      "basis": "v1.37.0 插入索引后整体下移，原 offset=291 失效",
+      "source": "A线 P3-1 / D线 / B线 P1-4"
+    },
+    {
+      "id": "S2",
+      "topic": "08/10 库目录声明",
+      "must_not_contain": [
+        "08/09/10/11 首部有目录"
+      ],
+      "basis": "实测 08/10 无 `## 目录`，索引在文末",
+      "source": "D线"
+    },
+    {
+      "id": "S3",
+      "topic": "README 版本声明",
+      "rule": "README 当前版本须等于 SKILL version",
+      "basis": "README L119 曾写 v1.37.0 而实际 v1.37.5",
+      "source": "A线 P3-3 / D线"
+    }
+  ]
+}
