@@ -33,6 +33,8 @@ def collect_dist_files():
     refdir = os.path.join(ROOT, 'references')
     if os.path.isdir(refdir):
         for f in sorted(os.listdir(refdir)):
+            if not f.endswith('.md'):
+                continue  # 【v1.39.4·A线P2-3】只收库 .md，防杂散文件入包
             p = os.path.join(refdir, f)
             if os.path.isfile(p):
                 files.append((p, f'references/{f}'))
@@ -522,17 +524,13 @@ def cmd_verify(args):
     _decls = set(re.findall(r'当前版本 \*\*(v[\d.]+)\*\*', _rd)) | set(re.findall(r'高情商聊天技能（gaoqing-shang-liaotian）(v[\d.]+)', _rd))
     _sv = re.search(r'^version:\s*"([^"]+)"', open(SKILL_MD, encoding='utf-8').read(), re.M)
     _svv = 'v' + _sv.group(1) if _sv else None
+    _has_hist = bool(re.search(r'（当前版本 \*\*v[\d.]+\*\*）', _rd))
+    chk(_has_hist,
+        'README 含「（当前版本 **vX**）」声明行',
+        '声明行缺失（被删且未补回）——bump 的 ⚠️ 警告由此兑现')
     chk(_decls and _decls == {_svv},
         f'README 版本声明一致（{sorted(_decls)} vs SKILL {_svv}）',
         'README 内有版本声明与 SKILL 不符（bump 未同步）')
-
-    # 25 【v1.39.0 新增】README 声明的校验项数与实际接近（防口径漂移）
-    _mcnt = re.search(r'清单校验（(\d+) 项）', _rd)
-    _actual = len(oks) + len(warns) + len(fails) + 1
-    if _mcnt:
-        _d = abs(int(_mcnt.group(1)) - _actual)
-        chk(_d <= 3, f'README 校验项数口径接近实际（声明 {_mcnt.group(1)} / 实际约 {_actual}）',
-            f'偏差 {_d} 项，需更新 README')
 
     # 26 【v1.39.4 新增·T3 发现】禁止「抓取时间冒充数据时间」
     _c15v = open(os.path.join(REFS, '15-资源地图与源可信度评级.md'), encoding='utf-8').read()
@@ -549,16 +547,33 @@ def cmd_verify(args):
     chk('安全升级条款' in _skv and '12356' in _skv,
         'SKILL 含自伤/危机「安全升级条款」（热线与转介指引）',
         '缺安全升级条款——16库 §2.1b 的自伤指针会悬空')
-    chk('安全升级条款' in open(os.path.join(REFS, '16-分寸感与边界感.md'), encoding='utf-8').read(),
+    _p16 = os.path.join(REFS, '16-分寸感与边界感.md')
+    chk(os.path.exists(_p16) and '安全升级条款' in open(_p16, encoding='utf-8').read(),
         '16库 自伤指引已接到 SKILL 安全升级条款',
-        '16库 自伤指引悬空')
+        '16库 缺失或自伤指引悬空')
     # 28 【v1.39.4 新增·T2 发现】模板占位规则
     chk('占位替换规则' in _skv and '照抄即撒谎' in _skv,
         'SKILL Step3 含模板占位替换规则（防照抄即撒谎）',
         '缺占位替换规则')
-    chk('占位检查' in open(os.path.join(REFS, '05-自我检查清单.md'), encoding='utf-8').read(),
+    _p05 = os.path.join(REFS, '05-自我检查清单.md')
+    chk(os.path.exists(_p05) and '占位检查' in open(_p05, encoding='utf-8').read(),
         '05库 自检第4遍含占位检查',
-        '05库 缺占位检查')
+        '05库 缺失或缺占位检查')
+
+    # 25 【v1.39.5·A线P1-1 重构】README 声明的校验项数 == 真实总数
+    #     原缺陷：_actual 中途计算（len(oks)+1），漏算自身与 #26-28 共 7 项，
+    #     且容差 ±3 —— README 写过期值 PASS、写真实值 FAIL（逻辑反转）。
+    #     修法：移到全部 chk 之后，真实总数零容差比对。
+    _rd_final = open(README, encoding='utf-8').read()
+    _m_cnt = re.search(r'清单校验（(\d+) 项）', _rd_final)
+    _total = len(oks) + len(warns) + len(fails)
+    if _m_cnt:
+        _declared = int(_m_cnt.group(1))
+        chk(_declared == _total,
+            f'README 校验项数与实际一致（声明 {_declared} / 实际 {_total}）',
+            f'声明 {_declared} ≠ 实际 {_total}——请把 README 的「清单校验（N 项）」改为 {_total}')
+    else:
+        chk(False, 'README 含「清单校验（N 项）」声明', '未找到声明行')
 
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')
