@@ -534,6 +534,32 @@ def cmd_verify(args):
         chk(_d <= 3, f'README 校验项数口径接近实际（声明 {_mcnt.group(1)} / 实际约 {_actual}）',
             f'偏差 {_d} 项，需更新 README')
 
+    # 26 【v1.39.4 新增·T3 发现】禁止「抓取时间冒充数据时间」
+    _c15v = open(os.path.join(REFS, '15-资源地图与源可信度评级.md'), encoding='utf-8').read()
+    # 【v1.39.4 修正】只查标题行——正文更正说明里合法引用旧错误标题不算违规
+    _c15_hdr = next((l for l in _c15v.split('\n') if l.startswith('## 八、')), '')
+    chk('2021 年快照' in _c15_hdr and '2026-10 抓取' in _c15_hdr and '2026-10 微信读书数据' not in _c15_hdr,
+        '15库 §八标题 = 数据年代（2021 快照）与抓取时间（2026-10）分离',
+        f'标题仍在伪装数据年代: {_c15_hdr[:60]}')
+    chk('2021 年的快照' in _c15v and '2021-07-18' in _c15v,
+        '15库 已标注数据真实年代（2021 快照 + 仓库最后更新日）',
+        '缺 2021 年代标注')
+    # 27 【v1.39.4 新增·T3 发现】安全升级条款必须存在且被 16库 引用
+    _skv = open(SKILL_MD, encoding='utf-8').read()
+    chk('安全升级条款' in _skv and '12356' in _skv,
+        'SKILL 含自伤/危机「安全升级条款」（热线与转介指引）',
+        '缺安全升级条款——16库 §2.1b 的自伤指针会悬空')
+    chk('安全升级条款' in open(os.path.join(REFS, '16-分寸感与边界感.md'), encoding='utf-8').read(),
+        '16库 自伤指引已接到 SKILL 安全升级条款',
+        '16库 自伤指引悬空')
+    # 28 【v1.39.4 新增·T2 发现】模板占位规则
+    chk('占位替换规则' in _skv and '照抄即撒谎' in _skv,
+        'SKILL Step3 含模板占位替换规则（防照抄即撒谎）',
+        '缺占位替换规则')
+    chk('占位检查' in open(os.path.join(REFS, '05-自我检查清单.md'), encoding='utf-8').read(),
+        '05库 自检第4遍含占位检查',
+        '05库 缺占位检查')
+
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')
     for w in warns: print(f'  ⚠️  {w}')
