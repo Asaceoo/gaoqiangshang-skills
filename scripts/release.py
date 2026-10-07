@@ -339,6 +339,18 @@ def cmd_verify(args):
     chk(len(hits09) > 0, f'11 库存在「09 库 N 条」声明（实测 {len(hits09)} 处）', '正则零匹配')
     chk(not bad09, f'11 库中「09 库 N 条」口径与实测({real09})一致', str(bad09[:3]))
 
+    # 17b 【v1.39.7 新增】11 库字符数口径与实测一致（防 SKILL.md 声明漂移）
+    sk_txt_cf = open(SKILL_MD, encoding='utf-8').read()
+    char_m = re.search(r'11-平台榜单与实战话术库\.md` 单文件约\s*([\d.]+)\s*万字符', sk_txt_cf)
+    if char_m:
+        claimed_wan = float(char_m.group(1))
+        actual_wan = len(c11_txt) / 10000
+        chk(abs(claimed_wan - actual_wan) < 0.01,
+            f'11 库字符数口径与实测一致（声明 {claimed_wan:.2f}万 / 实测 {actual_wan:.2f}万）',
+            f'偏差 {abs(claimed_wan - actual_wan):.4f}万')
+    else:
+        fails.append('SKILL.md 中 11 库字符数声明未找到')
+
     # 18 【v1.36.4 新增】内容架构优化防回归
     c11_txt2 = open(os.path.join(REFS,'11-平台榜单与实战话术库.md'), encoding='utf-8').read()
     chk('## 场景索引' in c11_txt2, '11 库含场景索引（按用户问法导航）')
