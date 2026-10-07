@@ -90,11 +90,15 @@ def cmd_bump(args):
     open(SKILL_MD,'w',encoding='utf-8').write(s2)
     print(f'  ✓ SKILL.md frontmatter → {new[1:]}')
 
-    # 2) 用户手册 README.md
+    # 2) 用户手册 README.md —— 【v1.39.0 修复】标题行 + 版本历史行都要同步
+    #    原缺陷：只改标题行，导致「（当前版本 **vX**）」长期停留在旧版本
+    #    （独立审查 D 线发现 README 写 v1.37.0 而实际 v1.38.0；根因即此）
     r = open(README, encoding='utf-8').read()
     r2 = re.sub(r'(#\s*高情商聊天技能（gaoqing-shang-liaotian）)v[\d.]+', rf'\g<1>{new}', r, count=1)
+    n_hist = len(re.findall(r'（当前版本 \*\*v[\d.]+\*\*）', r2))
+    r2 = re.sub(r'（当前版本 \*\*v[\d.]+\*\*）', f'（当前版本 **{new}**）', r2)
     open(README,'w',encoding='utf-8').write(r2)
-    print(f'  ✓ 用户手册 README.md → {new}')
+    print(f'  ✓ 用户手册 README.md → {new}（标题行 + 版本历史 {n_hist} 处）')
 
     # 3) 技术手册 + 其版本历史表加一行
     t = open(TECH, encoding='utf-8').read()
@@ -479,6 +483,26 @@ def cmd_verify(args):
     ]
     for _n, _c in _empty_guard:
         chk(_c > 0, f'断言有效性：{_n} 有实际匹配（{_c}）', '零匹配=空断言')
+
+    # 24 【v1.39.0 新增·补 D 线盲区】README 内所有版本声明必须一致
+    #    D 线发现：release.py 的「过期当前 vX」断言只查 voice-call-guide，README 不在范围，
+    #    导致 README 标题已是新版本、版本历史行却停在旧版本而校验全绿。
+    #    此处做「类级」检查：抓出 README 中所有 vX.Y.Z 形态的版本声明，必须全部相等。
+    _rd = open(README, encoding='utf-8').read()
+    _decls = set(re.findall(r'当前版本 \*\*(v[\d.]+)\*\*', _rd)) | set(re.findall(r'高情商聊天技能（gaoqing-shang-liaotian）(v[\d.]+)', _rd))
+    _sv = re.search(r'^version:\s*"([^"]+)"', open(SKILL_MD, encoding='utf-8').read(), re.M)
+    _svv = 'v' + _sv.group(1) if _sv else None
+    chk(_decls and _decls == {_svv},
+        f'README 版本声明一致（{sorted(_decls)} vs SKILL {_svv}）',
+        'README 内有版本声明与 SKILL 不符（bump 未同步）')
+
+    # 25 【v1.39.0 新增】README 声明的校验项数与实际接近（防口径漂移）
+    _mcnt = re.search(r'清单校验（(\d+) 项）', _rd)
+    _actual = len(oks) + len(warns) + len(fails) + 1
+    if _mcnt:
+        _d = abs(int(_mcnt.group(1)) - _actual)
+        chk(_d <= 3, f'README 校验项数口径接近实际（声明 {_mcnt.group(1)} / 实际约 {_actual}）',
+            f'偏差 {_d} 项，需更新 README')
 
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')

@@ -86,6 +86,26 @@ def run(verbose=False):
                 rd = open(os.path.join(ROOT, 'README.md'), encoding='utf-8').read()
                 check(f'v{v}' in rd, f"S3 README 版本声明含 v{v}", 'README 版本须与 SKILL 一致')
 
+    # --- v1.39.0 新库完整性 ---
+    print('\n[新库完整性]')
+    nlibs = data.get('new_libraries', {}).get('checks', [])
+    for c in nlibs:
+        fp = os.path.join(ROOT, 'references', c['lib'])
+        if not os.path.exists(fp):
+            check(False, f"{c['id']} {c['lib']} 存在", '文件缺失')
+            continue
+        body = open(fp, encoding='utf-8').read()
+        check(len(body) > 2000, f"{c['id']} {c['lib']} 非空壳（{len(body):,} 字符）")
+        for kw in c.get('must_contain', []):
+            check(kw in body, f"{c['id']} {c['lib']}：含「{kw}」", c.get('note', ''))
+
+    # --- 路由可达性：SKILL.md 必须引用全部 references 库 ---
+    print('\n[路由可达性]')
+    refd = set(re.findall(r'references/([0-9]{2}-[^\s`|)]+\.md)', skill))
+    actual = {f for f in os.listdir(os.path.join(ROOT, 'references')) if f.endswith('.md')}
+    check(not (refd - actual), f"SKILL.md 引用的库全部存在（{len(refd)} 个）", f"缺失 {refd - actual}")
+    check(not (actual - refd), f"所有库都被 SKILL.md 引用（{len(actual)} 个）", f"未引用 {actual - refd}")
+
     print('\n' + '=' * 80)
     total = len(fails)
     print(f"失败项：{total}")
