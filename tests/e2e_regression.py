@@ -95,7 +95,8 @@ for f in subs:
     defined |= set(re.findall(r'^###\s+(\d+\.\d+)\s', content, re.M))
     defined |= set(re.findall(r'§(\d+\.\d+)', content))
 # Check 09库 references
-c09 = open(os.path.join(REFS, '09-高频场景回复案例集.md'), encoding='utf-8').read()
+_09_subs = ['09a-职场与面试.md','09b-亲密与家庭.md','09c-社交与线上.md','09d-消费与维权.md','09e-目录与索引.md']
+c09 = '\n'.join(open(os.path.join(REFS, f), encoding='utf-8').read() for f in _09_subs)
 refs_09 = set(re.findall(r'11([a-g])\s*库\s*§(\d+\.\d+)', c09))
 dangling = [(p, r) for p, r in refs_09 if r not in defined]
 check(not dangling, f'09库→11X库引用全可达（{len(refs_09)} unique）', str(dangling[:3]))

@@ -1,4 +1,4 @@
-# 高情商聊天技能（gaoqing-shang-liaotian）v1.39.9
+# 高情商聊天技能（gaoqing-shang-liaotian）v1.40.0
 
 
 
@@ -244,7 +244,7 @@ gaoqing-shang-liaotian/
 
 
 
-完整历代变更见 **[CHANGELOG.md](CHANGELOG.md)**（当前版本 **v1.39.9**）。
+完整历代变更见 **[CHANGELOG.md](CHANGELOG.md)**（当前版本 **v1.40.0**）。
 
 
 

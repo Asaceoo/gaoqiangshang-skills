@@ -197,7 +197,7 @@ def cmd_verify(args):
         chk(False, 'test-prompts.json 合法', str(e))
 
     # 7 大文件有目录
-    for f in ['09-高频场景回复案例集.md','11a-索引与平台调研.md']:
+    for f in ['09e-目录与索引.md','11a-索引与平台调研.md']:
         p = os.path.join(REFS,f)
         if os.path.exists(p):
             t = open(p,encoding='utf-8').read()
@@ -256,6 +256,9 @@ def cmd_verify(args):
     # 11库拆分后子文件列表与拼接全文（供后续多处检查共用）
     _11_subs = ['11a-索引与平台调研.md','11b-职场与垂直行业.md','11c-饭局与家庭.md','11d-生活服务.md','11e-医疗与专业.md','11f-消费维权上.md','11g-消费维权下.md']
     c11_txt = '\n'.join(open(os.path.join(REFS,f), encoding='utf-8').read() for f in _11_subs)
+    # 09库拆分后子文件列表与拼接全文（v1.40.0 拆分）
+    _09_subs = ['09a-职场与面试.md','09b-亲密与家庭.md','09c-社交与线上.md','09d-消费与维权.md','09e-目录与索引.md']
+    c09_txt = '\n'.join(open(os.path.join(REFS,f), encoding='utf-8').read() for f in _09_subs)
 
     # 11 【v1.36.0 新增】11 库速查表无重复行
     p11 = os.path.join(REFS,'11a-索引与平台调研.md')
@@ -333,7 +336,7 @@ def cmd_verify(args):
         oks.append('references GFM 表格成表性正常')
 
     # 17 【v1.36.0 新增·补盲区】附录类数字口径（09 库条数须与实测一致）
-    real09 = len(re.findall(r'^\|\s*\d+\s*\|', open(os.path.join(REFS,'09-高频场景回复案例集.md'),encoding='utf-8').read(), re.M))
+    real09 = len(re.findall(r'^\|\s*\d+\s*\|', c09_txt, re.M))
     bad09 = []
     hits09 = list(re.finditer(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt))
     for m in hits09:
@@ -352,11 +355,14 @@ def cmd_verify(args):
     text_nm = set(re.findall(r'§(\d+\.\d+)', c11_txt))
     all_defined = defined_nm | text_nm
     dangling = []
-    for src_name, src_path in [('09库', os.path.join(REFS,'09-高频场景回复案例集.md')),
+    for src_name, src_path in [('09库', None),  # 09库拆分后用 c09_txt
                                  ('04库', os.path.join(REFS,'04-生活社交话术库.md')),
                                  ('SKILL.md', SKILL_MD)]:
-        if not os.path.exists(src_path): continue
-        src_txt = open(src_path, encoding='utf-8').read()
+        if src_name == '09库':
+            src_txt = c09_txt
+        else:
+            if not os.path.exists(src_path): continue
+            src_txt = open(src_path, encoding='utf-8').read()
         refs = set(re.findall(r'11[a-g]?\s*库\s*§(\d+\.\d+)', src_txt))
         for r in refs:
             if r not in all_defined:
@@ -375,7 +381,6 @@ def cmd_verify(args):
     else:
         fails.append('11 库场景索引块无法定位')
 
-    c09_txt = open(os.path.join(REFS,'09-高频场景回复案例集.md'), encoding='utf-8').read()
     chk('### 🎯 场景层' in c09_txt and '### 📚 批次层' in c09_txt,
         '09 库目录为「场景层 + 批次层」双层')
     c09_toc = re.search(r'^## 目录.*?(?=^## )', c09_txt, re.S | re.M)
@@ -467,7 +472,7 @@ def cmd_verify(args):
         warns.append('未找到 tests/edge_regression.py，跳过边界回归')
 
     # 21 【v1.37.6 新增】09 场景层区间不得跨话题重叠（防「家长群读到装修」类错配）
-    _c09b = open(os.path.join(REFS,'09-高频场景回复案例集.md'), encoding='utf-8').read()
+    _c09b = c09_txt  # 使用拆分后拼接全文
     _toc9 = re.search(r'^## 目录.*?(?=^## )', _c09b, re.S | re.M)
     if _toc9:
         _lay = re.search(r'### 🎯 场景层.*?(?=### 📚 批次层)', _toc9.group(0), re.S)
