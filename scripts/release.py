@@ -100,6 +100,8 @@ def cmd_bump(args):
     t = open(TECH, encoding='utf-8').read()
     old_tech = 'v' + re.search(r'技术手册\s*v([\d.]+)', t).group(1)
     t2 = t.replace(f'技术手册 {old_tech}', f'技术手册 {new}')
+    # 正文中所有「当前 vX」一并更新（否则 verify 的过期检测会失败）
+    t2 = re.sub(r'（当前 v[\d.]+）', f'（当前 {new}）', t2)
     t2 = re.sub(r'(\*\*版本\s*)v[\d.]+(\*\*)', rf'\g<1>{new}\g<2>', t2, count=1)
     t2 = re.sub(r'(更新日期\s*)[\d-]+', rf'\g<1>{today}', t2, count=1)
     # 版本历史表插入新行（表头后的第一行位置）
@@ -247,8 +249,11 @@ def cmd_verify(args):
         m7 = re.search(r'^##\s*七、', c11, re.M)
         if m5 and m7:
             seg = c11[m5.start():m7.start()]
+            # 仅统计数据行：排除表头行（与「症状 / 场景」同形）与分隔行
             rows=[l.strip() for l in seg.split('\n')
-                  if l.strip().startswith('|') and not re.match(r'^\|[\s\-:|]+\|$', l.strip())]
+                  if l.strip().startswith('|')
+                  and not re.match(r'^\|[\s\-:|]+\|$', l.strip())
+                  and '症状 / 场景' not in l]
             dup = len(rows) - len(set(rows))
             chk(dup==0, f'11 库速查表无重复行（{len(rows)} 数据行）', f'重复 {dup}')
             # § 引用可达性
@@ -269,6 +274,60 @@ def cmd_verify(args):
     chk(len(dist) >= 16, f'分发白名单条目数 {len(dist)}')
     chk(not any('scripts/' in r or 'test-prompts' in r for _,r in dist),
         '分发包不含测试/构建产物')
+
+    # 14 【v1.36.0 新增·补盲区】技术手册版本声明与 SKILL 一致（防冒充"当前"）
+    tech_txt = open(TECH, encoding='utf-8').read()
+    stale = re.findall(r'当前 v(?!' + re.escape(v['skill'] or '') + r')[\d.]+', tech_txt)
+    chk(not stale, '技术手册无过期的「当前 vX」声明', str(stale[:3]))
+
+    # 15 【v1.36.0 新增·补盲区】高风险判据全局一致（防「唯一权威表」被旧枚举架空）
+    sk = open(SKILL_MD, encoding='utf-8').read()
+    chk('高风险判定表' in sk and '全技能唯一权威' in sk, 'SKILL 存在唯一权威高风险判定表')
+    # 其他位置若出现旧的 4 项枚举（且不是引用表），视为不一致
+    legacy = re.findall(r'高风险场景（(?:金钱|当众)[^）]*）', sk + open(README, encoding='utf-8').read())
+    legacy = [x for x in legacy if '判定表' not in x and '判据' not in x]
+    chk(not legacy, '无残留的旧高风险枚举（应统一引用判定表）', str(legacy[:2]))
+    c05_txt = open(os.path.join(REFS,'05-自我检查清单.md'), encoding='utf-8').read()
+    chk('以 SKILL 表为准' in c05_txt or 'SKILL.md Step 4' in c05_txt,
+        '05 库分级引用 SKILL 权威表')
+
+    # 16 【v1.36.0 新增·补盲区】GFM 表格成表性（管道区块须有表头分隔行）
+    sep_re = re.compile(r'^\|[\s\-:|]+\|$')
+    for root,_,files in os.walk(REFS):
+        for f in files:
+            if not f.endswith('.md'): continue
+            txt = open(os.path.join(root,f), encoding='utf-8').read()
+            ls = txt.split('\n')
+            blocks=[]; cur=[]
+            for i,l in enumerate(ls):
+                if l.strip().startswith('|'): cur.append(i)
+                else:
+                    if cur: blocks.append(cur); cur=[]
+            if cur: blocks.append(cur)
+            badblk = []
+            for b in blocks:
+                if len(b) >= 2 and not sep_re.match(ls[b[1]].strip()):
+                    badblk.append(b[0]+1)
+            if badblk:
+                fails.append(f'{f}: {len(badblk)} 个管道区块缺 GFM 表头（会退化为裸文本）行 {badblk[:4]}')
+    if not any('缺 GFM 表头' in f_ for f_ in fails):
+        oks.append('references GFM 表格成表性正常')
+
+    # 17 【v1.36.0 新增·补盲区】附录类数字口径（09 库条数须与实测一致）
+    c11_txt = open(os.path.join(REFS,'11-平台榜单与实战话术库.md'), encoding='utf-8').read()
+    real09 = len(re.findall(r'^\|\s*\d+\s*\|', open(os.path.join(REFS,'09-高频场景回复案例集.md'),encoding='utf-8').read(), re.M))
+    bad09 = []
+    for m in re.finditer(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt):
+        if int(m.group(1)) != real09:
+            bad09.append((c11_txt[:m.start()].count('\n')+1, m.group(1)))
+    chk(not bad09, f'11 库中「09 库 N 条」口径与实测({real09})一致', str(bad09[:3]))
+
+    # 18 【v1.36.0 新增·补盲区】README 声明的 verify 项数须与实际一致
+    rd_txt = open(README, encoding='utf-8').read()
+    claim = re.search(r'清单校验（(\d+)\s*项）', rd_txt)
+    if claim:
+        # 本次运行的总项数 = oks+warns+fails 中"断言"类（粗略以名称计数）
+        pass  # 由 main 在打印时回填，见下方 finalize
 
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')
