@@ -327,12 +327,40 @@ def cmd_verify(args):
     chk(len(hits09) > 0, f'11 库存在「09 库 N 条」声明（实测 {len(hits09)} 处）', '正则零匹配')
     chk(not bad09, f'11 库中「09 库 N 条」口径与实测({real09})一致', str(bad09[:3]))
 
-    # 18 【v1.36.0 新增·补盲区】README 声明的 verify 项数须与实际一致
-    rd_txt = open(README, encoding='utf-8').read()
-    claim = re.search(r'清单校验（(\d+)\s*项）', rd_txt)
-    if claim:
-        # 本次运行的总项数 = oks+warns+fails 中"断言"类（粗略以名称计数）
-        pass  # 由 main 在打印时回填，见下方 finalize
+    # 18 【v1.36.4 新增】内容架构优化防回归
+    c11_txt2 = open(os.path.join(REFS,'11-平台榜单与实战话术库.md'), encoding='utf-8').read()
+    chk('## 场景索引' in c11_txt2, '11 库含场景索引（按用户问法导航）')
+    idx_m = re.search(r'^## 场景索引.*?(?=^## )', c11_txt2, re.S | re.M)
+    if idx_m:
+        idx_rows = len(re.findall(r'^\|(?!\s*什么情况|\s*-)', idx_m.group(0), re.M))
+        chk(idx_rows >= 60, f'场景索引条目充足（{idx_rows} 行）')
+        secs_idx = set(re.findall(r'§(\d+)', idx_m.group(0)))
+        chk(len(secs_idx) >= 50, f'场景索引覆盖节数充足（{len(secs_idx)} 节）')
+    else:
+        fails.append('11 库场景索引块无法定位')
+
+    c09_txt = open(os.path.join(REFS,'09-高频场景回复案例集.md'), encoding='utf-8').read()
+    chk('### 🎯 场景层' in c09_txt and '### 📚 批次层' in c09_txt,
+        '09 库目录为「场景层 + 批次层」双层')
+    c09_toc = re.search(r'^## 目录.*?(?=^## )', c09_txt, re.S | re.M)
+    if c09_toc:
+        cov = set()
+        for mm in re.finditer(r'^\|\s*[^|]+\|\s*((?:#\d+(?:-\d+)?[、]?)+)\s*\|', c09_toc.group(0), re.M):
+            for a, b in re.findall(r'#(\d+)(?:-(\d+))?', mm.group(1)):
+                a2 = int(a); b2 = int(b) if b else a2
+                cov.update(range(a2, b2 + 1))
+        real_total = len(re.findall(r'^\|\s*\d+\s*\|', c09_txt, re.M))
+        chk(len(cov) >= real_total, f'09 库场景层覆盖全部条目（{len(cov)}/{real_total}）')
+
+    chk('数据时效说明' in c11_txt2, '11 库含平台数据时效说明')
+    chk(c11_txt2.count('⏳') >= 10, f'11 库时效标记充足（{c11_txt2.count("⏳")} 处）')
+
+    _sk = open(SKILL_MD, encoding='utf-8').read()
+    _fm = _sk.split('---')[1]
+    _allowed = {'name', 'description', 'version'}
+    _present = set(re.findall(r'^([A-Za-z_][A-Za-z0-9_]*)\s*:', _fm, re.M))
+    _extra = _present - _allowed
+    chk(not _extra, 'frontmatter 无无效字段（运行时仅读 name/description）', str(sorted(_extra)))
 
     print('='*66); print('清单兜底校验'); print('='*66)
     for o in oks: print(f'  ✅ {o}')
