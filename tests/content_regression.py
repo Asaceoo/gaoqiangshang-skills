@@ -66,7 +66,7 @@ def run(verbose=False):
 
     # --- 过期声明 ---
     print('\n[过期声明]')
-    c11 = refs.get('11-平台榜单与实战话术库.md', '')
+    c11 = '\n'.join(refs.get(f, '') for f in ['11a-索引与平台调研.md','11b-职场与垂直行业.md','11c-饭局与家庭.md','11d-生活服务.md','11e-医疗与专业.md','11f-消费维权上.md','11g-消费维权下.md'])
     lines = c11.split('\n')
     for c in data['stale_claims']:
         if c['id'] == 'S1':
@@ -101,7 +101,7 @@ def run(verbose=False):
 
     # --- 路由可达性：SKILL.md 必须引用全部 references 库 ---
     print('\n[路由可达性]')
-    refd = set(re.findall(r'references/([0-9]{2}-[^\s`|)]+\.md)', skill))
+    refd = set(re.findall(r'references/([0-9]{2}[a-g]?-[^\s`|)]+\.md)', skill))
     actual = {f for f in os.listdir(os.path.join(ROOT, 'references')) if f.endswith('.md')}
     check(not (refd - actual), f"SKILL.md 引用的库全部存在（{len(refd)} 个）", f"缺失 {refd - actual}")
     check(not (actual - refd), f"所有库都被 SKILL.md 引用（{len(actual)} 个）", f"未引用 {actual - refd}")

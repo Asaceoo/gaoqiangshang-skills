@@ -18,13 +18,14 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTS = os.path.join(ROOT, 'tests', 'index_regression.json')
-REF11 = os.path.join(ROOT, 'references', '11-平台榜单与实战话术库.md')
+_11_subs = ['11a-索引与平台调研.md','11b-职场与垂直行业.md','11c-饭局与家庭.md','11d-生活服务.md','11e-医疗与专业.md','11f-消费维权上.md','11g-消费维权下.md']
+REF11 = '\n'.join(open(os.path.join(ROOT, 'references', f), encoding='utf-8').read() for f in _11_subs)
 REF09 = os.path.join(ROOT, 'references', '09-高频场景回复案例集.md')
 
 
 def load_index():
     """返回 (11库场景索引文本, 11库全文, 09库全文)"""
-    c11 = open(REF11, encoding='utf-8').read()
+    c11 = REF11  # 已预加载为拼接内容
     c09 = open(REF09, encoding='utf-8').read()
     m = re.search(r'^## 场景索引.*?(?=^## )', c11, re.S | re.M)
     return (m.group(0) if m else ''), c11, c09

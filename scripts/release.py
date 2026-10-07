@@ -8,7 +8,7 @@ gaoqing-shang-liaotian 发布工具链
   pack    构建 zip 包（自动按新版本命名）
   info    打印当前版本信息
 """
-import os, re, sys, json, zipfile, hashlib, datetime, argparse, shutil
+import os, re, sys, json, zipfile, hashlib, datetime, argparse, shutil, subprocess
 sys.stdout.reconfigure(encoding='utf-8')
 
 # 脚本位于 <repo>/scripts/，技能根目录是其上一级
@@ -167,7 +167,7 @@ def cmd_verify(args):
 
     # 3 引用链
     s = open(SKILL_MD, encoding='utf-8').read()
-    refd = set(re.findall(r'references/([0-9]{2}-[^\s`|)]+\.md)', s))
+    refd = set(re.findall(r'references/([0-9]{2}[a-g]?-[^\s`|)]+\.md)', s))
     real = set(os.listdir(REFS)) if os.path.isdir(REFS) else set()
     chk(not (refd-real), '无断链引用', str(refd-real))
     chk(not (real-refd), '无孤儿 reference', str(real-refd))
@@ -197,7 +197,7 @@ def cmd_verify(args):
         chk(False, 'test-prompts.json 合法', str(e))
 
     # 7 大文件有目录
-    for f in ['09-高频场景回复案例集.md','11-平台榜单与实战话术库.md']:
+    for f in ['09-高频场景回复案例集.md','11a-索引与平台调研.md']:
         p = os.path.join(REFS,f)
         if os.path.exists(p):
             t = open(p,encoding='utf-8').read()
@@ -253,14 +253,18 @@ def cmd_verify(args):
     # 最低版本应覆盖到起点
     chk(len(cvs) >= 30, f'CHANGELOG 版本条目充足（{len(cvs)}）')
 
+    # 11库拆分后子文件列表与拼接全文（供后续多处检查共用）
+    _11_subs = ['11a-索引与平台调研.md','11b-职场与垂直行业.md','11c-饭局与家庭.md','11d-生活服务.md','11e-医疗与专业.md','11f-消费维权上.md','11g-消费维权下.md']
+    c11_txt = '\n'.join(open(os.path.join(REFS,f), encoding='utf-8').read() for f in _11_subs)
+
     # 11 【v1.36.0 新增】11 库速查表无重复行
-    p11 = os.path.join(REFS,'11-平台榜单与实战话术库.md')
+    p11 = os.path.join(REFS,'11a-索引与平台调研.md')
     if os.path.exists(p11):
         c11 = open(p11,encoding='utf-8').read()
         m5 = re.search(r'^##\s*五、「症状 → 方法」.*$', c11, re.M)
         m7 = re.search(r'^##\s*七、', c11, re.M)
-        if m5 and m7:
-            seg = c11[m5.start():m7.start()]
+        if m5:
+            seg = c11[m5.start():(m7.start() if m7 else len(c11))]
             # 仅统计数据行：排除表头行（与「症状 / 场景」同形）与分隔行
             rows=[l.strip() for l in seg.split('\n')
                   if l.strip().startswith('|')
@@ -269,8 +273,8 @@ def cmd_verify(args):
             dup = len(rows) - len(set(rows))
             chk(dup==0, f'11 库速查表无重复行（{len(rows)} 数据行）', f'重复 {dup}')
             # § 引用可达性
-            allref = set(re.findall(r'^###\s+(\d+)\.(\d+)', c11, re.M))
-            secs = set(re.findall(r'^§\s*(\d+)\.(\d+)', c11, re.M))
+            allref = set(re.findall(r'^###\s+(\d+)\.(\d+)', c11_txt, re.M))
+            secs = set(re.findall(r'^§\s*(\d+)\.(\d+)', c11_txt, re.M))
             used = set(re.findall(r'§\s*(\d+)\.(\d+)', seg))
             missing = {u for u in used if u not in allref and u not in secs}
             chk(not missing, '11 库速查表 § 引用全部可达', str(sorted(missing)[:5]))
@@ -329,7 +333,6 @@ def cmd_verify(args):
         oks.append('references GFM 表格成表性正常')
 
     # 17 【v1.36.0 新增·补盲区】附录类数字口径（09 库条数须与实测一致）
-    c11_txt = open(os.path.join(REFS,'11-平台榜单与实战话术库.md'), encoding='utf-8').read()
     real09 = len(re.findall(r'^\|\s*\d+\s*\|', open(os.path.join(REFS,'09-高频场景回复案例集.md'),encoding='utf-8').read(), re.M))
     bad09 = []
     hits09 = list(re.finditer(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt))
@@ -339,20 +342,29 @@ def cmd_verify(args):
     chk(len(hits09) > 0, f'11 库存在「09 库 N 条」声明（实测 {len(hits09)} 处）', '正则零匹配')
     chk(not bad09, f'11 库中「09 库 N 条」口径与实测({real09})一致', str(bad09[:3]))
 
-    # 17b 【v1.39.7 新增】11 库字符数口径与实测一致（防 SKILL.md 声明漂移）
-    sk_txt_cf = open(SKILL_MD, encoding='utf-8').read()
-    char_m = re.search(r'11-平台榜单与实战话术库\.md` 单文件约\s*([\d.]+)\s*万字符', sk_txt_cf)
-    if char_m:
-        claimed_wan = float(char_m.group(1))
-        actual_wan = len(c11_txt) / 10000
-        chk(abs(claimed_wan - actual_wan) < 0.01,
-            f'11 库字符数口径与实测一致（声明 {claimed_wan:.2f}万 / 实测 {actual_wan:.2f}万）',
-            f'偏差 {abs(claimed_wan - actual_wan):.4f}万')
-    else:
-        fails.append('SKILL.md 中 11 库字符数声明未找到')
+    # 17b 【v1.39.8 更新】11 库拆分后各子文件字符数上限检查
+    _11_max = max(len(open(os.path.join(REFS,f),encoding='utf-8').read()) for f in _11_subs)
+    chk(_11_max <= 31000, f'11 库子文件均 ≤3.1万字符（最大 {_11_max/10000:.2f}万）', f'最大 {_11_max} 字符')
+
+    # 17c 【v1.39.8 新增】跨库 §N.M 引用一致性（09库/04库/SKILL → 11库 ### N.M 定义）
+    defined_nm = set(re.findall(r'^###\s+(\d+\.\d+)\s', c11_txt, re.M))
+    # 也收集 11库内部 §N.M 文本引用作为补充定义集
+    text_nm = set(re.findall(r'§(\d+\.\d+)', c11_txt))
+    all_defined = defined_nm | text_nm
+    dangling = []
+    for src_name, src_path in [('09库', os.path.join(REFS,'09-高频场景回复案例集.md')),
+                                 ('04库', os.path.join(REFS,'04-生活社交话术库.md')),
+                                 ('SKILL.md', SKILL_MD)]:
+        if not os.path.exists(src_path): continue
+        src_txt = open(src_path, encoding='utf-8').read()
+        refs = set(re.findall(r'11\s*库\s*§(\d+\.\d+)', src_txt))
+        for r in refs:
+            if r not in all_defined:
+                dangling.append(f'{src_name}→11库§{r}')
+    chk(not dangling, f'跨库 §N.M 引用全可达（11库定义 {len(all_defined)} 个）', str(dangling[:6]))
 
     # 18 【v1.36.4 新增】内容架构优化防回归
-    c11_txt2 = open(os.path.join(REFS,'11-平台榜单与实战话术库.md'), encoding='utf-8').read()
+    c11_txt2 = open(os.path.join(REFS,'11a-索引与平台调研.md'), encoding='utf-8').read()
     chk('## 场景索引' in c11_txt2, '11 库含场景索引（按用户问法导航）')
     idx_m = re.search(r'^## 场景索引.*?(?=^## )', c11_txt2, re.S | re.M)
     if idx_m:
@@ -376,7 +388,7 @@ def cmd_verify(args):
         real_total = len(re.findall(r'^\|\s*\d+\s*\|', c09_txt, re.M))
         chk(len(cov) >= real_total, f'09 库场景层覆盖全部条目（{len(cov)}/{real_total}）')
 
-    chk('数据时效说明' in c11_txt2, '11 库含平台数据时效说明')
+    chk('数据时效说明' in c11_txt, '11 库含平台数据时效说明')
     # 场景索引引用的节号必须真实存在（防索引腐化）
     _CN = '一二三四五六七八九十'
     def _cn2i(x):
@@ -385,7 +397,7 @@ def cmd_verify(args):
         if '十' in x:
             a, b = x.split('十'); return (_CN.index(a)+1)*10 + (_CN.index(b)+1 if b else 0)
         return _CN.index(x)+1 if x in _CN else None
-    _secs_real = {_cn2i(m.group(1)) for m in re.finditer(r'^##\s+([一二三四五六七八九十]+)、', c11_txt2, re.M)}
+    _secs_real = {_cn2i(m.group(1)) for m in re.finditer(r'^##\s+([一二三四五六七八九十]+)、', c11_txt, re.M)}
     _secs_real.discard(None)
     if idx_m:
         # 用边界断言避免 §59.1 回溯出幻影 §5
@@ -393,7 +405,7 @@ def cmd_verify(args):
         _dead = sorted(_idx_secs - _secs_real)
         chk(not _dead, '场景索引引用的节号全部存在', str(_dead[:5]))
         # 索引使用中的 §N.M 小节须可达
-        _subs = {(int(a), int(b)) for a, b in re.findall(r'^#{3,4}\s*(?:§\s*)?(\d+)\.(\d+)', c11_txt2, re.M)}
+        _subs = {(int(a), int(b)) for a, b in re.findall(r'^#{3,4}\s*(?:§\s*)?(\d+)\.(\d+)', c11_txt, re.M)}
         _isub = {(int(a), int(b)) for a, b in re.findall(r'§(\d+)\.(\d+)', idx_m.group(0))}
         _deadsub = sorted(_isub - _subs)
         chk(not _deadsub, '场景索引 §N.M 引用全部可达', str(_deadsub[:5]))
@@ -401,8 +413,8 @@ def cmd_verify(args):
         _B = None
         _m5 = re.search(r'^##\s*五、「症状 → 方法」检索速查表（本库）\s*$', c11_txt2, re.M)
         _m7 = re.search(r'^##\s*七、', c11_txt2, re.M)
-        if _m5 and _m7:
-            _Btxt = c11_txt2[_m5.start():_m7.start()]
+        if _m5:
+            _Btxt = c11_txt2[_m5.start():(_m7.start() if _m7 else len(c11_txt2))]
             _conflict = []
             for _qa, _sa in re.findall(r'^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|', idx_m.group(0), re.M):
                 _as = {int(y) for y in re.findall(r'§\s*(\d+)', _sa)}
@@ -415,7 +427,7 @@ def cmd_verify(args):
                         if _bs and not (_as & _bs):
                             _conflict.append((_qa[:24], sorted(_as), sorted(_bs)))
             chk(not _conflict, '两套检索入口无互斥指向', str(_conflict[:3]))
-    chk(c11_txt2.count('⏳') >= 10, f'11 库时效标记充足（{c11_txt2.count("⏳")} 处）')
+    chk(c11_txt.count('⏳') >= 10, f'11 库时效标记充足（{c11_txt.count("⏳")} 处）')
 
     _sk = open(SKILL_MD, encoding='utf-8').read()
     _fm = _sk.split('---')[1]
@@ -517,11 +529,26 @@ def cmd_verify(args):
     else:
         warns.append('未找到 tests/content_regression.py，跳过内容回归')
 
+    # 22b 【v1.39.8 新增】端到端行为测试（路由可达性 + 输出格式 + 自检机制）
+    _e2e = os.path.join(ROOT, 'tests', 'e2e_regression.py')
+    if os.path.exists(_e2e):
+        try:
+            _r = subprocess.run([sys.executable, '-X', 'utf8', _e2e], capture_output=True, text=True, timeout=60)
+            if _r.returncode == 0:
+                chk(True, '端到端行为测试全通过')
+            else:
+                _e2e_fails = [l for l in _r.stdout.split('\n') if '❌' in l]
+                chk(False, '端到端行为测试全通过', f'{len(_e2e_fails)} 项失败: {_e2e_fails[:3]}')
+        except Exception as _e:
+            chk(False, '端到端行为测试可运行', str(_e))
+    else:
+        warns.append('未找到 tests/e2e_regression.py，跳过端到端测试')
+
     # 23 【v1.37.6 新增·修 D 线指出的空断言】关键断言须有实际匹配量
     # D 线指出：verify 输出自身暴露 2 项「正则零匹配」的空断言 —— 此处显式校验
     _empty_guard = [
         ('README→SKILL 引用', len(re.findall(r'（见\s*SKILL\.md[「"“]([^」"”]+)[」"”]）', open(README, encoding='utf-8').read()))),
-        ('09库口径声明', len(re.findall(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt2))),
+        ('09库口径声明', len(re.findall(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt))),
         ('场景索引条目', len(re.findall(r'^\|(?!\s*你会怎么说|\s*-)', idx_m.group(0), re.M)) if idx_m else 0),
         ('09场景层条目', len(re.findall(r'^\|\s*[^|]+\s*\|\s*#', _toc9.group(0), re.M)) if _toc9 else 0),
     ]
