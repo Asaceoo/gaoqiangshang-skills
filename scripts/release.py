@@ -265,6 +265,9 @@ def cmd_verify(args):
 
     # 12 【v1.36.0 新增】跨文件章节引用可达（防改名后断链）
     ref_pat = re.findall(r'（见\s*SKILL\.md[「"“]([^」"”]+)[」"”]）', open(os.path.join(ROOT,'README.md'),encoding='utf-8').read())
+    # 防「正则零匹配 → 静默不校验」：必须至少命中 1 条，否则视为断言失效
+    chk(len(ref_pat) > 0, f'README 存在指向 SKILL 的章节引用（实测 {len(ref_pat)} 处）',
+        '正则零匹配，断言形同虚设')
     for name in ref_pat:
         chk(name in open(SKILL_MD,encoding='utf-8').read(),
             f'README→SKILL 章节引用可达「{name}」')
@@ -317,9 +320,11 @@ def cmd_verify(args):
     c11_txt = open(os.path.join(REFS,'11-平台榜单与实战话术库.md'), encoding='utf-8').read()
     real09 = len(re.findall(r'^\|\s*\d+\s*\|', open(os.path.join(REFS,'09-高频场景回复案例集.md'),encoding='utf-8').read(), re.M))
     bad09 = []
-    for m in re.finditer(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt):
+    hits09 = list(re.finditer(r'09\s*库[^\n]{0,30}?(\d+)\s*条', c11_txt))
+    for m in hits09:
         if int(m.group(1)) != real09:
             bad09.append((c11_txt[:m.start()].count('\n')+1, m.group(1)))
+    chk(len(hits09) > 0, f'11 库存在「09 库 N 条」声明（实测 {len(hits09)} 处）', '正则零匹配')
     chk(not bad09, f'11 库中「09 库 N 条」口径与实测({real09})一致', str(bad09[:3]))
 
     # 18 【v1.36.0 新增·补盲区】README 声明的 verify 项数须与实际一致
