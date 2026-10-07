@@ -27,10 +27,15 @@ prompts = tp.get('prompts', [])
 # === 1. 路由可达性：每个 prompt 的 expects 应能映射到 SKILL.md 路由表 ===
 print('\n[1. 路由可达性]')
 # Extract routing table from SKILL.md
-route_rows = re.findall(r'\|\s*([^|]+?)\s*\|\s*' + chr(96) + r'references/([^' + chr(96) + r']+)' + chr(96) + r'\s*\|', sk)
+# v1.40.2 修复：兼容路由表尾部的 ` ~XK tok` 标注（原正则要求反引号后紧跟 |，token 标注后恒为 0 匹配）
+route_rows = re.findall(r'\|\s*([^|]+?)\s*\|\s*' + chr(96) + r'references/([^' + chr(96) + r']+)' + chr(96) + r'[^|]*\|', sk)
 route_map = {}
 for scenario, fname in route_rows:
     route_map[fname.strip()] = scenario.strip()
+
+check(len(route_map) >= 24, f'路由表解析成功（{len(route_map)} 条）', '正则失效或路由表缩水')
+_ghost_routes = sorted(f for f in route_map if not os.path.exists(os.path.join(REFS, f)))
+check(not _ghost_routes, '路由表指向的文件全部存在', str(_ghost_routes[:4]))
 
 # All reference files
 all_refs = sorted([f for f in os.listdir(REFS) if f.endswith('.md')])

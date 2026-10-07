@@ -253,12 +253,15 @@ def cmd_verify(args):
     # 最低版本应覆盖到起点
     chk(len(cvs) >= 30, f'CHANGELOG 版本条目充足（{len(cvs)}）')
 
-    # 11库拆分后子文件列表与拼接全文（供后续多处检查共用）
+    # 拆分子文件列表与拼接全文（缺失时记录并降级，避免 FileNotFoundError 直接崩溃）
     _11_subs = ['11a-索引与平台调研.md','11b-职场与垂直行业.md','11c-饭局与家庭.md','11d-生活服务.md','11e-医疗与专业.md','11f-消费维权上.md','11g-消费维权下.md']
-    c11_txt = '\n'.join(open(os.path.join(REFS,f), encoding='utf-8').read() for f in _11_subs)
-    # 09库拆分后子文件列表与拼接全文（v1.40.0 拆分）
     _09_subs = ['09a-职场与面试.md','09b-亲密与家庭.md','09c-社交与线上.md','09d-消费与维权.md','09e-目录与索引.md']
-    c09_txt = '\n'.join(open(os.path.join(REFS,f), encoding='utf-8').read() for f in _09_subs)
+    _missing_subs = [f for f in (_11_subs + _09_subs) if not os.path.exists(os.path.join(REFS, f))]
+    chk(not _missing_subs, '拆分子文件齐全（09a-09e / 11a-11g）', f'缺失: {_missing_subs}')
+    def _concat_sub(fs):
+        return '\n'.join(open(os.path.join(REFS,f), encoding='utf-8').read() for f in fs if os.path.exists(os.path.join(REFS,f)))
+    c11_txt = _concat_sub(_11_subs)
+    c09_txt = _concat_sub(_09_subs)
 
     # 11 【v1.36.0 新增】11 库速查表无重复行
     p11 = os.path.join(REFS,'11a-索引与平台调研.md')
@@ -369,14 +372,70 @@ def cmd_verify(args):
                 dangling.append(f'{src_name}→11库§{r}')
     chk(not dangling, f'跨库 §N.M 引用全可达（11库定义 {len(all_defined)} 个）', str(dangling[:6]))
 
-    # 17d 【v1.40.1 新增】token 预算检查（SKILL + 任一单库 ≤ 25K token）
-    _sk_tok = len(open(SKILL_MD, encoding='utf-8').read()) // 3
-    _max_lib_tok = max(len(open(os.path.join(REFS,f), encoding='utf-8').read()) // 3 for f in os.listdir(REFS) if f.endswith('.md'))
-    chk(_sk_tok + _max_lib_tok <= 25000, f'token 预算：SKILL+最大单库 ≤25K（SKILL {_sk_tok}+最大 {_max_lib_tok}={_sk_tok+_max_lib_tok}）', f'超限 {_sk_tok+_max_lib_tok}')
+    # 17d 【v1.40.2 修订】token 预算检查——改用中文感知估算（原 len//3 低估中文约 1.8x）
+    def _tok(t):
+        _cjk = len(re.findall(r'[\u4e00-\u9fff]', t))
+        return int(_cjk * 0.85 + (len(t) - _cjk) / 3.5)
+    _sk_tok = _tok(open(SKILL_MD, encoding='utf-8').read())
+    _lib_toks = {f: _tok(open(os.path.join(REFS,f), encoding='utf-8').read()) for f in os.listdir(REFS) if f.endswith('.md')}
+    _max_f = max(_lib_toks, key=_lib_toks.get) if _lib_toks else '?'
+    _max_lib_tok = _lib_toks.get(_max_f, 0)
+    chk(_sk_tok + _max_lib_tok <= 40000, f'token 预算：SKILL+最大单库 ≤40K（SKILL {_sk_tok} + {_max_f[:10]} {_max_lib_tok} = {_sk_tok+_max_lib_tok}）', f'超限 {_sk_tok+_max_lib_tok}')
 
     # 17e 【v1.40.1 新增】11 库子文件 ⏳ 时效标记分布检查
-    _no_marker = [f for f in _11_subs if open(os.path.join(REFS,f), encoding='utf-8').read().count('⏳') < 1]
+    _no_marker = [f for f in _11_subs if os.path.exists(os.path.join(REFS,f)) and open(os.path.join(REFS,f), encoding='utf-8').read().count('⏳') < 1]
     chk(not _no_marker, '11 库每个子文件至少 1 个 ⏳ 时效标记', f'缺失: {_no_marker}')
+
+    # 17f 【v1.40.2 新增】SKILL.md 与 README 中一切「NNx-...md」提及必须真实存在（防参考库清单/文件树残留已删除文件）
+    _real = set(os.listdir(REFS))
+    _ghost = []
+    for _doc_name, _doc_path in [('SKILL.md', SKILL_MD), ('README.md', README)]:
+        if not os.path.exists(_doc_path): continue
+        _dtxt = open(_doc_path, encoding='utf-8').read()
+        for _mn in set(re.findall(r'([0-9]{2}[a-g]?-[^\s`|()）]+?\.md)', _dtxt)):
+            if _mn not in _real:
+                _ghost.append(f'{_doc_name}:{_mn}')
+    chk(not _ghost, 'SKILL/README 提及的库文件全部存在', f'幽灵引用: {sorted(_ghost)[:6]}')
+
+    # 17g 【v1.40.2 新增】09e 场景索引条目号可达性（数据驱动生成，防索引腐化误导路由）
+    _p9e = os.path.join(REFS, '09e-目录与索引.md')
+    if os.path.exists(_p9e):
+        _c9e = open(_p9e, encoding='utf-8').read()
+        _im = re.search(r'^## 场景索引.*?(?=^## )', _c9e, re.S | re.M)
+        if _im:
+            _ib = _im.group(0)
+            _bad_idx = []
+            _parsed = 0
+            _cache = {}
+            for _line in _ib.split('\n'):
+                _cells = [c.strip() for c in _line.strip().strip('|').split('|')] if _line.strip().startswith('|') else []
+                if len(_cells) < 3 or 'references/' not in _cells[1]:
+                    continue
+                _kw, _fcell, _ncell = _cells[0], _cells[1], _cells[2]
+                _sub = _fcell.split('references/')[-1].strip()
+                _parsed += 1
+                if not os.path.exists(os.path.join(REFS, _sub)):
+                    _bad_idx.append(f'路径无效:{_fcell}'); continue
+                if _sub not in _cache:
+                    _st = open(os.path.join(REFS, _sub), encoding='utf-8').read()
+                    _cache[_sub] = (_st, dict(re.findall(r'^\|\s*(\d+)\s*\|([^\n]*)', _st, re.M)))
+                _st, _erows = _cache[_sub]
+                _mapped = [int(x) for x in re.findall(r'#(\d+)', _ncell)]
+                if not _mapped:
+                    _bad_idx.append(f'无条目号:{_kw}'); continue
+                for _n in _mapped:
+                    if str(_n) not in _erows:
+                        _bad_idx.append(f'{_sub}#{_n}')
+                # 语义校验：关键词须真出现在所映射的某条条目文本中（防「编号存在但语义错配」）
+                if not any(_kw in _erows.get(str(_n), '') for _n in _mapped):
+                    _bad_idx.append(f'语义错配:{_kw}->{_sub}')
+            # 空断言防护：解析行数下界，防「解析 0 行却通过」
+            chk(_parsed >= 20, f'09e 场景索引可解析（{_parsed} 行）', f'仅解析到 {_parsed} 行——格式或路径异常')
+            chk(not _bad_idx, f'09e 场景索引路径/条目号/语义全部可达（校验 {_parsed} 行）', f'失效: {_bad_idx[:6]}')
+        else:
+            chk(False, '09e 含场景索引块')
+    else:
+        warns.append('未找到 09e-目录与索引.md，跳过索引完整性检查')
 
     # 18 【v1.36.4 新增】内容架构优化防回归
     c11_txt2 = open(os.path.join(REFS,'11a-索引与平台调研.md'), encoding='utf-8').read()
@@ -454,7 +513,7 @@ def cmd_verify(args):
     _reg = os.path.join(ROOT, 'tests', 'index_regression.py')
     if os.path.exists(_reg):
         import subprocess as _sp
-        _r = _sp.run([sys.executable, _reg], capture_output=True, text=True, encoding='utf-8')
+        _r = _sp.run([sys.executable, '-X', 'utf8', _reg], capture_output=True, text=True, encoding='utf-8', errors='replace')
         _m = re.search(r'命中 (\d+)/(\d+)', _r.stdout or '')
         if _m:
             _h, _t = int(_m.group(1)), int(_m.group(2))
@@ -469,7 +528,7 @@ def cmd_verify(args):
     _edge = os.path.join(ROOT, 'tests', 'edge_regression.py')
     if os.path.exists(_edge):
         import subprocess as _sp2
-        _r2 = _sp2.run([sys.executable, _edge], capture_output=True, text=True, encoding='utf-8')
+        _r2 = _sp2.run([sys.executable, '-X', 'utf8', _edge], capture_output=True, text=True, encoding='utf-8', errors='replace')
         _m2 = re.search(r'通过 (\d+)/(\d+)', _r2.stdout or '')
         if _m2:
             _h2, _t2 = int(_m2.group(1)), int(_m2.group(2))
@@ -532,7 +591,7 @@ def cmd_verify(args):
     _ct = os.path.join(ROOT, 'tests', 'content_regression.py')
     if os.path.exists(_ct):
         import subprocess as _sp3
-        _r3 = _sp3.run([sys.executable, _ct], capture_output=True, text=True, encoding='utf-8')
+        _r3 = _sp3.run([sys.executable, '-X', 'utf8', _ct], capture_output=True, text=True, encoding='utf-8', errors='replace')
         _m3 = re.search(r'失败项：(\d+)', _r3.stdout or '')
         if _m3:
             _f3 = int(_m3.group(1))
@@ -547,7 +606,7 @@ def cmd_verify(args):
     _e2e = os.path.join(ROOT, 'tests', 'e2e_regression.py')
     if os.path.exists(_e2e):
         try:
-            _r = subprocess.run([sys.executable, '-X', 'utf8', _e2e], capture_output=True, text=True, timeout=60)
+            _r = subprocess.run([sys.executable, '-X', 'utf8', _e2e], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
             if _r.returncode == 0:
                 chk(True, '端到端行为测试全通过')
             else:
