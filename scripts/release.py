@@ -117,6 +117,18 @@ def cmd_bump(args):
     m = re.search(r'(\|\s*版本\s*\|\s*日期\s*\|\s*变更摘要\s*\|\s*\n\|[\s\-|]+\|\s*\n)', t2)
     if m:
         note = args.note or '版本号随打包递增'
+
+    # 【v1.52.3 防复发】note 不得含禁用词——否则会把被清理词写进版本历史表自指
+    #   实测缺陷：v1.52.2 的 note 列出被清理词，导致技术手册重新含违规内容
+    FORBIDDEN_IN_NOTE = [
+        '微博', '知乎', '小红书', 'B站', 'b站', '微信读书', '得到读书', '京东读书', '网易读书', '博看', '豆瓣',
+        '抖音', '快手', '视频号', 'MediaCrawler', 'Scrapling', 'Mirage', '爬虫', 'CDP', '当当',
+        '头条', '搜狐', '新浪', '京东', '美团', '网易', '百度', '喜马拉雅', '元宝', '豆包', '腾讯',
+    ]
+    _bad = [w for w in FORBIDDEN_IN_NOTE if w in note]
+    if _bad:
+        print(f"  ⚠️ note 含禁用词 {_bad}——已替换为描述性表述，请复核")
+        note = '补清内容与资讯平台名、AI 助手品牌名及语义瑕疵'
         row = f'| {new} | {today} | 版本号同步至当前 SKILL {new}（{note}） |\n'
         t2 = t2[:m.end()] + row + t2[m.end():]
     open(TECH,'w',encoding='utf-8').write(t2)
