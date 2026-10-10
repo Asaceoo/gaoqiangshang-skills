@@ -1,4 +1,4 @@
-# 高情商聊天技能（gaoqing-shang-liaotian）v1.52.0
+# 高情商聊天技能（gaoqing-shang-liaotian）v1.52.1
 
 > 通用版高情商沟通技能 —— **任何 AI 智能体都能用**：Claude / Claude Code / Cursor / WPS AI / WorkBuddy / OpenClaw / 任意支持自定义指令的对话产品。
 >
@@ -191,7 +191,7 @@ gaoqing-shang-liaotian/
 
 ## 📝 版本历史
 
-完整历代变更见 **[CHANGELOG.md](CHANGELOG.md)**（当前版本 **v1.52.0**）。
+完整历代变更见 **[CHANGELOG.md](CHANGELOG.md)**（当前版本 **v1.52.1**）。
 
 > **v1.50.x 要点**：新增 **18 练习题库**（500 题，五题型）+ **17 库 §H 短视频平台/短视频平台短视频实战课**（122 视频 + 3877 评论，百万赞爆款验证）；五层反检测反检测加固 + 浏览器调试协议连接已登录浏览器方案攻克短视频平台/短视频平台验证码墙；跨 9 平台累计采集 **11,634 条**；修复 §H 章节顺序与 §G 计数。
 

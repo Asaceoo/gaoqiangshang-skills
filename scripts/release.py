@@ -648,7 +648,7 @@ def cmd_verify(args):
     _c15v = open(os.path.join(REFS, '15-资源地图与源可信度评级.md'), encoding='utf-8').read()
     # 【v1.39.4 修正】只查标题行——正文更正说明里合法引用旧错误标题不算违规
     _c15_hdr = next((l for l in _c15v.split('\n') if l.startswith('## 八、')), '')
-    chk('2021 年快照' in _c15_hdr and '2026-10 抓取' in _c15_hdr and '2026-10 微信读书数据' not in _c15_hdr,
+    chk('2021 年快照' in _c15_hdr and '2026-10 抓取' in _c15_hdr and '2026-10 电子书平台数据' not in _c15_hdr,
         '15库 §八标题 = 数据年代（2021 快照）与抓取时间（2026-10）分离',
         f'标题仍在伪装数据年代: {_c15_hdr[:60]}')
     chk('2021 年的快照' in _c15v and '2021-07-18' in _c15v,
