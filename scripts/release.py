@@ -646,20 +646,20 @@ def cmd_verify(args):
     else:
         warns.append('未找到 tests/content_regression.py，跳过内容回归')
 
-    # 22b 【v1.39.8 新增】端到端行为测试（路由可达性 + 输出格式 + 自检机制）
+    # 22b 【v1.39.8 新增·v1.55.1 更名】结构回归测试（路由可达性 + 输出格式 + 自检机制；不含行为级测试）
     _e2e = os.path.join(ROOT, 'tests', 'e2e_regression.py')
     if os.path.exists(_e2e):
         try:
             _r = subprocess.run([sys.executable, '-X', 'utf8', _e2e], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
             if _r.returncode == 0:
-                chk(True, '端到端行为测试全通过')
+                chk(True, '结构回归测试全通过（静态断言，不含行为级）')
             else:
                 _e2e_fails = [l for l in _r.stdout.split('\n') if '❌' in l]
-                chk(False, '端到端行为测试全通过', f'{len(_e2e_fails)} 项失败: {_e2e_fails[:3]}')
+                chk(False, '结构回归测试全通过（静态断言，不含行为级）', f'{len(_e2e_fails)} 项失败: {_e2e_fails[:3]}')
         except Exception as _e:
-            chk(False, '端到端行为测试可运行', str(_e))
+            chk(False, '结构回归测试可运行', str(_e))
     else:
-        warns.append('未找到 tests/e2e_regression.py，跳过端到端测试')
+        warns.append('未找到 tests/e2e_regression.py，跳过结构回归测试')
 
     # 23 【v1.37.6 新增·修 D 线指出的空断言】关键断言须有实际匹配量
     # D 线指出：verify 输出自身暴露 2 项「正则零匹配」的空断言 —— 此处显式校验

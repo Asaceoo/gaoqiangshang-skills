@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""端到端行为测试：验证 SKILL.md 路由可达性 + 输出格式完整性 + 自检机制存在性
-不调用 AI，而是静态验证 AI 使用本技能时必须满足的结构条件。"""
+"""结构回归测试（原名「端到端行为测试」，名不副实，v1.55.1 更名）：
+验证 SKILL.md 路由可达性 + 输出格式完整性 + 自检机制存在性。
+**不调用 AI**，只做静态结构断言——真正的行为级测试需固定 prompt + 期望结构实跑并存档，尚未实现。"""
 import re, os, sys, json
 sys.stdout.reconfigure(encoding='utf-8')
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
