@@ -803,6 +803,29 @@ def cmd_verify(args):
         f'仅比对到 {len(_fkeys)} 项事实（<4）——校验可能已静默失效')
     chk(not _fconf, f'跨文档数字一致（比对 {len(_fkeys)} 项事实）', f'数字不一致 {_fconf[:4]}')
 
+    # 30 【v1.54.2 新增】列表型契约项数一致
+    #    防住：SKILL Step 5 列 7 项输出格式，README 只列 6 项（用户手册漏项）
+    def _count_items(_text, _start, _stops):
+        _ls = _text.split('\n')
+        _i = next((k for k, l in enumerate(_ls) if re.search(_start, l)), None)
+        if _i is None:
+            return None
+        _n = 0
+        for _l in _ls[_i + 1:]:
+            if any(re.search(_s, _l) for _s in _stops):
+                break
+            if re.match(r'^\d+\.\s', _l):
+                _n += 1
+        return _n
+
+    _n_skill = _count_items(open(SKILL_MD, encoding='utf-8').read(), r'^### Step 5', [r'^## ', r'^### '])
+    _n_readme = _count_items(open(README, encoding='utf-8').read(), r'^### 输出格式', [r'^## ', r'^### ', r'^> '])
+    chk(_n_skill and _n_skill >= 5 and _n_readme and _n_readme >= 5,
+        f'输出格式契约项数可解析（SKILL {_n_skill} / README {_n_readme}）',
+        f'解析失败或项数过少（SKILL {_n_skill} / README {_n_readme}）——校验可能已失效')
+    chk(_n_skill == _n_readme,
+        f'输出格式契约项数一致（SKILL {_n_skill} = README {_n_readme}）',
+        f'SKILL Step 5 列 {_n_skill} 项，README 只列 {_n_readme} 项——用户手册漏项')
     # 25 【v1.39.5·A线P1-1 重构】README 声明的校验项数 == 真实总数
     #     原缺陷：_actual 中途计算（len(oks)+1），漏算自身与 #26-28 共 7 项，
     #     且容差 ±3 —— README 写过期值 PASS、写真实值 FAIL（逻辑反转）。
