@@ -716,6 +716,82 @@ def cmd_verify(args):
         '05库 自检第4遍含占位检查',
         '05库 缺失或缺占位检查')
 
+    # ============ 【v1.53.1 新增】三条内容一致性校验 ============
+    # 背景：原 74 项全部漏检「文档数字 vs 真实/交叉一致性」类缺陷。历史反复出现：
+    #   §H 计数漂移 / §G 计数漂移 / §D 标题78 vs 正文40 / §E 标题189 vs 正文57 /
+    #   README 行内 3886≠3901 / 全平台计数含 8-14 无关数据 841 条。
+    _all_md = [SKILL_MD, README, TECH] + [
+        os.path.join(REFS, _f) for _f in sorted(os.listdir(REFS)) if _f.endswith('.md')]
+
+    # 27 连续重复词扫描（批量替换易压出「平台平台」这类文本损伤）
+    _dup_re = re.compile(r'(平台|社区|工具|加固|方案|协议|视频|评论)\1')
+    _dups = []
+    for _p in _all_md:
+        for _i, _l in enumerate(open(_p, encoding='utf-8').read().split('\n'), 1):
+            for _m in _dup_re.finditer(_l):
+                _dups.append(f'{os.path.basename(_p)}:{_i} {_m.group(0)}')
+    chk(not _dups, '无连续重复词（批量替换损伤检测）', f'重复词 {_dups[:5]}')
+
+    # 28 17库 章节标题数字 vs 正文数字（同单位不同值 = 口径冲突）
+    _UNIT = r'(视频|帖|本|篇)'
+    _q17 = open(os.path.join(REFS, '17-高情商沟通书单与实战话术库.md'), encoding='utf-8').read()
+    _cnf = []
+    for _s in re.split(r'\n(?=## §)', _q17):
+        _hdr = _s.split('\n', 1)[0]
+        if not _hdr.startswith('## §'):
+            continue
+        _tn = {}
+        for _m in re.finditer(r'([\d,]+)\s*(?:条)?\s*' + _UNIT, _hdr):
+            _tn.setdefault(_m.group(2), set()).add(_m.group(1).replace(',', ''))
+        if not _tn:
+            continue
+        _bl = [x for x in _s.split('\n')[1:16] if not x.startswith('###')]
+        _body = '\n'.join(_bl)
+        for _u, _tv in _tn.items():
+            _bv = {m.group(1).replace(',', '') for m in re.finditer(r'([\d,]+)\s*(?:条|个)?\s*' + _u, _body)}
+            _bv |= {m.group(1).replace(',', '') for m in re.finditer(r'([\d,]+)\s*条[^\n]{0,4}?' + _u, _body)}
+            _diff = {v for v in _bv if v and v not in _tv}
+            if _diff:
+                _cnf.append(f'{_hdr[:20]} {_u} 标题{sorted(_tv)} vs 正文{sorted(_diff)}')
+    chk(not _cnf, '17库 章节标题数字与正文一致（或标题已并列声明）', f'口径冲突 {_cnf[:4]}')
+
+    # 29 跨文档数字一致（同一事实在 SKILL/README/技术手册中必须相等）
+    def _hist_strip(_t):
+        return '\n'.join(_l for _l in _t.split('\n') if not re.match(r'^\|\s*v\d', _l))
+
+    def _facts(_t):
+        _t = _hist_strip(_t)
+        _f = {}
+        for _label, _pat in [
+            ('总采集条数', r'累计\s*\*{0,2}([\d,]+)\s*条'),
+            ('短视频评论合计', r'122\s*视频\s*[+＋]\s*([\d,]+)\s*评论'),
+            ('视频社区', r'视频社区\s*([\d,]+)\s*视频\s*[/|]\s*([\d,]+)\s*评论'),
+            ('视频社区', r'\|\s*视频社区\s*\|\s*([\d,]+)\s*视频\s*\|\s*([\d,]+)\s*\|'),
+            ('生活方式社区', r'生活方式社区\s*([\d,]+)\s*帖\s*/\s*([\d,]+)'),
+            ('生活方式社区', r'\|\s*生活方式社区\s*\|\s*([\d,]+)\s*帖\s*\|\s*([\d,]+)\s*\|'),
+            ('社交媒体', r'社交媒体\s*([\d,]+)\s*帖\s*/\s*([\d,]+)'),
+            ('社交媒体', r'\|\s*社交媒体\s*\|\s*([\d,]+)\s*帖\s*\|\s*([\d,]+)\s*\|'),
+        ]:
+            _m = re.search(_pat, _t)
+            if _m:
+                _f.setdefault(_label, set()).add('/'.join(g.replace(',', '') for g in _m.groups() if g))
+        return _f
+
+    _fdocs = {_d: _facts(open(_p, encoding='utf-8').read())
+              for _d, _p in (('SKILL', SKILL_MD), ('README', README), ('TECH', TECH))}
+    _fkeys = set().union(*[set(_v) for _v in _fdocs.values()])
+    _fconf = []
+    for _k in _fkeys:
+        _vals = set()
+        _who = []
+        for _d, _v in _fdocs.items():
+            if _k in _v:
+                _vals |= _v[_k]
+                _who.append(_d)
+        if len(_vals) > 1:
+            _fconf.append(f'{_k}: {sorted(_vals)} @{_who}')
+    chk(not _fconf, f'跨文档数字一致（比对 {len(_fkeys)} 项事实）', f'数字不一致 {_fconf[:4]}')
+
     # 25 【v1.39.5·A线P1-1 重构】README 声明的校验项数 == 真实总数
     #     原缺陷：_actual 中途计算（len(oks)+1），漏算自身与 #26-28 共 7 项，
     #     且容差 ±3 —— README 写过期值 PASS、写真实值 FAIL（逻辑反转）。
