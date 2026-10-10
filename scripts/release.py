@@ -826,6 +826,20 @@ def cmd_verify(args):
     chk(_n_skill == _n_readme,
         f'输出格式契约项数一致（SKILL {_n_skill} = README {_n_readme}）',
         f'SKILL Step 5 列 {_n_skill} 项，README 只列 {_n_readme} 项——用户手册漏项')
+    # 31 【v1.54.3 新增】README 内校验项数声明类级一致
+    #    防住：L41「81 项」vs「运行 74 项」vs「须 74/74」三处互斥（真实现过的缺陷）
+    _rd_txt = open(README, encoding='utf-8').read()
+    _decl_list = re.findall(r'清单校验（(\d+) 项）', _rd_txt)
+    _decl_list += re.findall(r'运行 (\d+) 项清单校验', _rd_txt)
+    for _pair in re.findall(r'须 (\d+)/(\d+)', _rd_txt):
+        _decl_list += list(_pair)
+    _cnt_decls = set(_decl_list)
+    chk(len(_decl_list) >= 2,
+        f'README 校验项数声明可解析（实测 {len(_decl_list)} 处）',
+        f'仅解析到 {len(_cnt_decls)} 处声明——校验可能已失效')
+    chk(len(_cnt_decls) == 1,
+        f'README 校验项数声明类级一致（{sorted(_cnt_decls)}）',
+        f'README 内校验项数声明互斥：{sorted(_cnt_decls)}——三处口径必须统一')
     # 25 【v1.39.5·A线P1-1 重构】README 声明的校验项数 == 真实总数
     #     原缺陷：_actual 中途计算（len(oks)+1），漏算自身与 #26-28 共 7 项，
     #     且容差 ±3 —— README 写过期值 PASS、写真实值 FAIL（逻辑反转）。
