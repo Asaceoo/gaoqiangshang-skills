@@ -730,12 +730,16 @@ def cmd_verify(args):
         for _i, _l in enumerate(open(_p, encoding='utf-8').read().split('\n'), 1):
             for _m in _dup_re.finditer(_l):
                 _dups.append(f'{os.path.basename(_p)}:{_i} {_m.group(0)}')
+    chk(len(_all_md) >= 20,
+        f'重复词扫描覆盖文件数（实测 {len(_all_md)}）',
+        f'扫描文件过少（{len(_all_md)}）——校验可能已失效')
     chk(not _dups, '无连续重复词（批量替换损伤检测）', f'重复词 {_dups[:5]}')
 
     # 28 17库 章节标题数字 vs 正文数字（同单位不同值 = 口径冲突）
     _UNIT = r'(视频|帖|本|篇)'
     _q17 = open(os.path.join(REFS, '17-高情商沟通书单与实战话术库.md'), encoding='utf-8').read()
     _cnf = []
+    _sec_seen = 0
     for _s in re.split(r'\n(?=## §)', _q17):
         _hdr = _s.split('\n', 1)[0]
         if not _hdr.startswith('## §'):
@@ -745,6 +749,7 @@ def cmd_verify(args):
             _tn.setdefault(_m.group(2), set()).add(_m.group(1).replace(',', ''))
         if not _tn:
             continue
+        _sec_seen += 1
         _bl = [x for x in _s.split('\n')[1:16] if not x.startswith('###')]
         _body = '\n'.join(_bl)
         for _u, _tv in _tn.items():
@@ -753,6 +758,9 @@ def cmd_verify(args):
             _diff = {v for v in _bv if v and v not in _tv}
             if _diff:
                 _cnf.append(f'{_hdr[:20]} {_u} 标题{sorted(_tv)} vs 正文{sorted(_diff)}')
+    chk(_sec_seen >= 3,
+        f'17库 章节口径校验覆盖节数（实测 {_sec_seen}）',
+        f'仅解析到 {_sec_seen} 节——校验可能已失效')
     chk(not _cnf, '17库 章节标题数字与正文一致（或标题已并列声明）', f'口径冲突 {_cnf[:4]}')
 
     # 29 跨文档数字一致（同一事实在 SKILL/README/技术手册中必须相等）
@@ -790,6 +798,9 @@ def cmd_verify(args):
                 _who.append(_d)
         if len(_vals) > 1:
             _fconf.append(f'{_k}: {sorted(_vals)} @{_who}')
+    chk(len(_fkeys) >= 4,
+        f'跨文档校验覆盖事实数（实测 {len(_fkeys)}）',
+        f'仅比对到 {len(_fkeys)} 项事实（<4）——校验可能已静默失效')
     chk(not _fconf, f'跨文档数字一致（比对 {len(_fkeys)} 项事实）', f'数字不一致 {_fconf[:4]}')
 
     # 25 【v1.39.5·A线P1-1 重构】README 声明的校验项数 == 真实总数
